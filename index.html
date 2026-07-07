@@ -1,0 +1,1566 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>综艺项目周报数据收集表单</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: #f5f7fa;
+    margin: 0; padding: 0;
+    color: #333;
+  }
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 24px 16px 80px;
+  }
+  .header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 32px 24px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+  .header h1 { margin: 0 0 8px; font-size: 24px; }
+  .header p { margin: 0; opacity: 0.9; font-size: 14px; }
+  .progress-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    position: sticky;
+    top: 12px;
+    z-index: 100;
+  }
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .progress-title { font-weight: 600; font-size: 15px; }
+  .progress-percent { font-weight: 700; font-size: 18px; color: #667eea; }
+  .progress-bar-bg {
+    width: 100%; height: 10px;
+    background: #e8ecf1;
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    border-radius: 5px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+  .progress-hint {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #888;
+  }
+  .section {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .section-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f0f0f0;
+    color: #222;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title .badge {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: #e8ecf1;
+    color: #667eea;
+  }
+  .section-locked {
+    border: 2px dashed #e0e0e0;
+    background: #fafbfc;
+  }
+  .section-locked .section-title {
+    border-bottom-color: #e0e0e0;
+    color: #888;
+  }
+  .lock-notice {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+  .field-group {
+    margin-bottom: 20px;
+  }
+  .field-label {
+    display: block;
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 6px;
+    color: #444;
+  }
+  .field-label .required { color: #e74c3c; margin-left: 2px; }
+  .field-desc {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 6px;
+  }
+  input[type="text"], input[type="number"], input[type="date"], textarea, select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d9d9d9;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+    font-family: inherit;
+  }
+  input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+  }
+  input:disabled, textarea:disabled, select:disabled {
+    background: #f5f5f5;
+    color: #999;
+    cursor: not-allowed;
+    border-color: #e0e0e0;
+  }
+  textarea { resize: vertical; min-height: 80px; }
+  .file-upload {
+    border: 2px dashed #d9d9d9;
+    border-radius: 8px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #fafbfc;
+  }
+  .file-upload:hover { border-color: #667eea; background: #f8f9ff; }
+  .file-upload input { display: none; }
+  .file-upload .icon { font-size: 32px; color: #bbb; margin-bottom: 8px; }
+  .file-upload .hint { font-size: 13px; color: #888; }
+  .file-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .file-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f0f4ff;
+    color: #667eea;
+    padding: 4px 10px;
+    border-radius: 16px;
+    font-size: 13px;
+  }
+  .file-chip .remove {
+    cursor: pointer;
+    font-weight: 700;
+    opacity: 0.7;
+  }
+  .file-chip .remove:hover { opacity: 1; }
+  .preview-img {
+    max-width: 120px; max-height: 120px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid #eee;
+  }
+  .preview-video {
+    max-width: 200px;
+    border-radius: 8px;
+    border: 1px solid #eee;
+  }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; }
+  .col { flex: 1; min-width: 220px; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+  }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-secondary {
+    background: #f0f0f0;
+    color: #555;
+  }
+  .btn-secondary:hover { background: #e4e4e4; }
+  .btn-danger {
+    background: #e74c3c;
+    color: white;
+  }
+  .btn-danger:hover { opacity: 0.9; }
+  .btn-success {
+    background: #27ae60;
+    color: white;
+  }
+  .btn-success:hover { opacity: 0.9; }
+  .actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 32px;
+    position: sticky;
+    bottom: 16px;
+  }
+  .actions .btn { padding: 14px 28px; font-size: 15px; border-radius: 10px; }
+  .toast {
+    position: fixed;
+    top: 20px; left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+  .collapsible {
+    border: 1px solid #eee;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .collapsible-header {
+    background: #f8f9fa;
+    padding: 12px 16px;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+  }
+  .collapsible-body {
+    padding: 16px;
+    display: none;
+    border-top: 1px solid #eee;
+  }
+  .collapsible.open .collapsible-body { display: block; }
+  .collapsible-header::after {
+    content: "▶";
+    font-size: 12px;
+    color: #888;
+    transition: transform 0.2s;
+  }
+  .collapsible.open .collapsible-header::after { transform: rotate(90deg); }
+  .table-inputs {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+  }
+  .table-inputs th, .table-inputs td {
+    border: 1px solid #e0e0e0;
+    padding: 8px;
+    font-size: 13px;
+  }
+  .table-inputs th {
+    background: #f5f7fa;
+    font-weight: 600;
+    text-align: left;
+  }
+  .table-inputs input {
+    border: none;
+    padding: 6px;
+    width: 100%;
+    background: transparent;
+  }
+  .table-inputs input:focus {
+    outline: none;
+    background: #f0f4ff;
+  }
+  .table-inputs input:disabled {
+    background: #f5f5f5;
+    color: #999;
+  }
+  .add-row-btn {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #667eea;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 4px 0;
+  }
+  .add-row-btn:hover { text-decoration: underline; }
+  .add-row-btn:disabled {
+    color: #999;
+    cursor: not-allowed;
+  }
+  .hidden { display: none !important; }
+  .mode-bar {
+    background: white;
+    border-radius: 12px;
+    padding: 16px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .mode-info {
+    font-size: 14px;
+    color: #555;
+  }
+  .mode-info strong { color: #667eea; }
+  .mode-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .mode-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid #d9d9d9;
+    background: white;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .mode-btn:hover { border-color: #667eea; color: #667eea; }
+  .mode-btn.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+  }
+  .admin-panel {
+    background: #f8f9ff;
+    border: 1px solid #e0e0ff;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+  }
+  .admin-panel-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #667eea;
+    margin: 0 0 12px;
+  }
+  .admin-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .admin-btn {
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .admin-btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+  }
+  .admin-btn-danger {
+    background: #e74c3c;
+    color: white;
+  }
+  .admin-btn-secondary {
+    background: #f0f0f0;
+    color: #555;
+  }
+  .section-status {
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin-left: auto;
+  }
+  .status-empty { background: #e8ecf1; color: #888; }
+  .status-partial { background: #fff3cd; color: #856404; }
+  .status-complete { background: #d4edda; color: #155724; }
+  @media (max-width: 640px) {
+    .row { flex-direction: column; gap: 0; }
+    .col { min-width: 100%; }
+    .actions { flex-direction: column; }
+    .actions .btn { width: 100%; }
+    .mode-bar { flex-direction: column; align-items: flex-start; }
+    .admin-actions { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>综艺项目周报数据收集</h1>
+    <p>多方协作填写，管理员确认基础信息后各合作方接力填写</p>
+  </div>
+
+  <!-- 模式切换栏 -->
+  <div class="mode-bar" id="modeBar">
+    <div class="mode-info">
+      当前身份：<strong id="currentRole">普通填写者</strong>
+      <span id="roleHint" style="color:#888;margin-left:8px;">只能填写自己负责的部分</span>
+    </div>
+    <div class="mode-actions">
+      <button class="mode-btn" id="btnNormal" onclick="setRole('normal')">普通填写者</button>
+      <button class="mode-btn" id="btnAdmin" onclick="setRole('admin')">管理员</button>
+    </div>
+  </div>
+
+  <!-- 管理员面板 -->
+  <div class="admin-panel hidden" id="adminPanel">
+    <div class="admin-panel-title">管理员操作</div>
+    <div class="admin-actions">
+      <button class="admin-btn admin-btn-primary" onclick="exportJson()">📤 导出JSON数据</button>
+      <button class="admin-btn admin-btn-primary" onclick="exportPdf()">📄 导出PDF</button>
+      <button class="admin-btn admin-btn-primary" onclick="createKmDoc()">🔗 生成学城文档</button>
+      <button class="admin-btn admin-btn-danger" onclick="clearAllData()">🗑️ 清空本周数据</button>
+    </div>
+  </div>
+
+  <div class="progress-card">
+    <div class="progress-header">
+      <span class="progress-title">整体填写进度</span>
+      <span class="progress-percent" id="progressPercent">0%</span>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progressBar"></div>
+    </div>
+    <div class="progress-hint" id="progressHint">请完善以下信息，进度达到 90% 时将通知审核人</div>
+  </div>
+
+  <form id="weeklyForm">
+
+    <!-- 1. 基本信息 - 仅管理员可编辑 -->
+    <div class="section" data-section="basic" data-admin-only="true">
+      <div class="section-title">
+        基本信息
+        <span class="badge">管理员</span>
+        <span class="section-status status-empty" id="status-basic">未填写</span>
+      </div>
+      <div class="lock-notice hidden" id="lock-basic">
+        此部分由管理员填写，普通填写者无法编辑
+      </div>
+      <div class="row">
+        <div class="col">
+          <div class="field-group">
+            <label class="field-label">项目名称<span class="required">*</span></label>
+            <input type="text" name="projectName" placeholder="例如：喜人奇妙夜2" required data-admin>
+          </div>
+        </div>
+        <div class="col">
+          <div class="field-group">
+            <label class="field-label">期数<span class="required">*</span></label>
+            <input type="text" name="episode" placeholder="例如：第一期" required data-admin>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <div class="field-group">
+            <label class="field-label">播出平台<span class="required">*</span></label>
+            <input type="text" name="platform" placeholder="例如：腾讯视频独播" required data-admin>
+          </div>
+        </div>
+        <div class="col">
+          <div class="field-group">
+            <label class="field-label">播出日期<span class="required">*</span></label>
+            <input type="date" name="airDate" required data-admin>
+          </div>
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">项目背景</label>
+        <div class="field-desc">简要描述节目类型、嘉宾阵容、播出周期及合作目标</div>
+        <textarea name="projectBackground" rows="3" placeholder="例如：喜剧竞演真人秀，固定嘉宾马东、胡先煦..." data-admin></textarea>
+      </div>
+      <div class="field-group">
+        <label class="field-label">核心结论（摘要）</label>
+        <div class="field-desc">用 3-5 条概括本期核心数据结论，将展示在周报最顶部</div>
+        <textarea name="coreConclusion" rows="4" placeholder="1. 首期累积播放量...&#10;2. 全网热搜...&#10;3. 商务植入..." data-admin></textarea>
+      </div>
+    </div>
+
+    <!-- 2. 播出进度 -->
+    <div class="section" data-section="schedule">
+      <div class="section-title">
+        播出进度
+        <span class="badge">必填</span>
+        <span class="section-status status-empty" id="status-schedule">未填写</span>
+      </div>
+      <div class="field-group">
+        <label class="field-label">播出状态<span class="required">*</span></label>
+        <select name="airStatus" required>
+          <option value="">请选择</option>
+          <option value="已播出">已播出</option>
+          <option value="已录制">已录制</option>
+          <option value="待录制">待录制</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label class="field-label">核心权益说明</label>
+        <input type="text" name="coreRights" placeholder="例如：团购花口、短植入-到餐、中插-团购篇">
+      </div>
+      <div class="field-group">
+        <label class="field-label">12期播出计划表</label>
+        <div class="field-desc">填写各期播出日期与状态</div>
+        <table class="table-inputs" id="scheduleTable">
+          <thead>
+            <tr><th>期数</th><th>播出日期</th><th>播出状态</th><th>核心权益</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><input placeholder="第一期"></td><td><input placeholder="9月26/27日"></td><td><input placeholder="已播出"></td><td><input placeholder="团购花口"></td></tr>
+          </tbody>
+        </table>
+        <button type="button" class="add-row-btn" onclick="addTableRow('scheduleTable')">+ 添加一行</button>
+      </div>
+    </div>
+
+    <!-- 3. 节目播出数据 -->
+    <div class="section" data-section="broadcast">
+      <div class="section-title">
+        节目播出数据
+        <span class="badge">必填</span>
+        <span class="section-status status-empty" id="status-broadcast">未填写</span>
+      </div>
+      <div class="row">
+        <div class="col">
+          <div class="field-group">
+            <label class="field-label">累积播放量</label>
+            <input type="text" name="totalPlayCount" placeholder="例如：1.2亿">
+          </div>
+        </div>
+        <div class="col">
+          <div class="field-group">
+            <label class="field-label">站内热度峰值</label>
+            <input type="text" name="heatPeak" placeholder="例如：24514">
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <div class="field-group">
+            <label class="field-label">保底单期播放量</label>
+            <input type="text" name="guaranteedPlay" placeholder="例如：1.67亿">
+          </div>
+        </div>
+        <div class="col">
+          <div class="field-group">
+            <label class="field-label">达成率</label>
+            <input type="text" name="playAchievementRate" placeholder="例如：71.5%">
+          </div>
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">站内榜单表现</label>
+        <textarea name="platformRankings" rows="2" placeholder="例如：腾讯视频总榜飙升榜TOP1、综艺热播榜TOP1..."></textarea>
+      </div>
+      <div class="field-group">
+        <label class="field-label">三方榜单数据</label>
+        <div class="field-desc">Vlinkage、云合、灯塔、猫眼等</div>
+        <table class="table-inputs" id="thirdPartyTable">
+          <thead>
+            <tr><th>榜单名称</th><th>排名/数据</th><th>持续天数</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><input placeholder="Vlinkage"></td><td><input placeholder="TOP1"></td><td><input placeholder="4天"></td></tr>
+          </tbody>
+        </table>
+        <button type="button" class="add-row-btn" onclick="addTableRow('thirdPartyTable')">+ 添加一行</button>
+      </div>
+      <div class="field-group">
+        <label class="field-label">社媒指数</label>
+        <div class="field-desc">百度指数、微信指数、微博指数等</div>
+        <textarea name="socialIndex" rows="2" placeholder="百度指数：15,809；微信指数：3,946,778..."></textarea>
+      </div>
+      <div class="field-group">
+        <label class="field-label">站内表现截图</label>
+        <div class="file-upload" onclick="this.querySelector('input').click()">
+          <input type="file" multiple accept="image/*" data-field="broadcastScreenshots" onchange="handleFiles(this)">
+          <div class="icon">📷</div>
+          <div class="hint">点击上传截图，支持多选</div>
+        </div>
+        <div class="file-list" id="list-broadcastScreenshots"></div>
+      </div>
+    </div>
+
+    <!-- 4. 节目传播 -->
+    <div class="section" data-section="spread">
+      <div class="section-title">
+        节目传播
+        <span class="section-status status-empty" id="status-spread">未填写</span>
+      </div>
+
+      <div class="collapsible open">
+        <div class="collapsible-header" onclick="toggleCollapsible(this)">热搜数据</div>
+        <div class="collapsible-body">
+          <div class="row">
+            <div class="col">
+              <div class="field-group">
+                <label class="field-label">全网热搜总数</label>
+                <input type="text" name="hotSearchTotal" placeholder="例如：137个">
+              </div>
+            </div>
+            <div class="col">
+              <div class="field-group">
+                <label class="field-label">统计截止时间</label>
+                <input type="date" name="hotSearchDeadline">
+              </div>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">各平台热搜分布</label>
+            <table class="table-inputs" id="hotSearchTable">
+              <thead>
+                <tr><th>平台</th><th>热搜总数</th><th>主榜上榜数</th><th>主榜TOP个数</th><th>文娱榜上榜数</th><th>高位热搜内容</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><input placeholder="微博"></td><td><input placeholder="62"></td><td><input placeholder="29"></td><td><input placeholder="TOP10*1"></td><td><input placeholder="33"></td><td><input placeholder="#辛芷蕾...#"></td></tr>
+              </tbody>
+            </table>
+            <button type="button" class="add-row-btn" onclick="addTableRow('hotSearchTable')">+ 添加一行</button>
+          </div>
+          <div class="field-group">
+            <label class="field-label">热搜上榜截图</label>
+            <div class="file-upload" onclick="this.querySelector('input').click()">
+              <input type="file" multiple accept="image/*" data-field="hotSearchScreenshots" onchange="handleFiles(this)">
+              <div class="icon">📷</div>
+              <div class="hint">上传各平台热搜截图</div>
+            </div>
+            <div class="file-list" id="list-hotSearchScreenshots"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="collapsible">
+        <div class="collapsible-header" onclick="toggleCollapsible(this)">短视频数据</div>
+        <div class="collapsible-body">
+          <div class="field-group">
+            <label class="field-label">各平台短视频数据</label>
+            <table class="table-inputs" id="shortVideoTable">
+              <thead>
+                <tr><th>平台</th><th>话题总播放量</th><th>新增播放量</th><th>发布数量</th><th>爆款数量</th><th>备注</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><input placeholder="抖音"></td><td><input placeholder="96.9亿"></td><td><input placeholder="6.9亿"></td><td><input placeholder="89"></td><td><input placeholder="44"></td><td><input placeholder=""></td></tr>
+              </tbody>
+            </table>
+            <button type="button" class="add-row-btn" onclick="addTableRow('shortVideoTable')">+ 添加一行</button>
+          </div>
+          <div class="field-group">
+            <label class="field-label">短视频截图/视频</label>
+            <div class="file-upload" onclick="this.querySelector('input').click()">
+              <input type="file" multiple accept="image/*,video/*" data-field="shortVideoMedia" onchange="handleFiles(this)">
+              <div class="icon">🎬</div>
+              <div class="hint">上传截图或视频</div>
+            </div>
+            <div class="file-list" id="list-shortVideoMedia"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="collapsible">
+        <div class="collapsible-header" onclick="toggleCollapsible(this)">媒体/制作方宣推资源</div>
+        <div class="collapsible-body">
+          <div class="field-group">
+            <label class="field-label">宣推资源列表</label>
+            <table class="table-inputs" id="mediaResourceTable">
+              <thead>
+                <tr><th>资源类型</th><th>资源点位</th><th>带品牌权益</th><th>备注</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><input placeholder="腾讯资源"></td><td><input placeholder="朋友圈广告"></td><td><input placeholder="联合logo"></td><td><input placeholder=""></td></tr>
+              </tbody>
+            </table>
+            <button type="button" class="add-row-btn" onclick="addTableRow('mediaResourceTable')">+ 添加一行</button>
+          </div>
+          <div class="field-group">
+            <label class="field-label">宣推素材截图</label>
+            <div class="file-upload" onclick="this.querySelector('input').click()">
+              <input type="file" multiple accept="image/*" data-field="mediaScreenshots" onchange="handleFiles(this)">
+              <div class="icon">📷</div>
+              <div class="hint">上传宣推素材截图</div>
+            </div>
+            <div class="file-list" id="list-mediaScreenshots"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="collapsible">
+        <div class="collapsible-header" onclick="toggleCollapsible(this)">爆款作品</div>
+        <div class="collapsible-body">
+          <div class="field-group">
+            <label class="field-label">爆款作品描述</label>
+            <textarea name="hitWorksDesc" rows="3" placeholder="描述爆款作品名称、传播效果、全网模仿情况等"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label">爆款作品截图/视频</label>
+            <div class="file-upload" onclick="this.querySelector('input').click()">
+              <input type="file" multiple accept="image/*,video/*" data-field="hitWorksMedia" onchange="handleFiles(this)">
+              <div class="icon">🎬</div>
+              <div class="hint">上传爆款作品相关素材</div>
+            </div>
+            <div class="file-list" id="list-hitWorksMedia"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. 节目权益表现 -->
+    <div class="section" data-section="rights">
+      <div class="section-title">
+        节目权益表现
+        <span class="section-status status-empty" id="status-rights">未填写</span>
+      </div>
+      <div class="field-group">
+        <label class="field-label">权益总览</label>
+        <textarea name="rightsOverview" rows="2" placeholder="例如：首期上线花式口播*1、短植入*1、创意中插*1，合计品牌展示5454秒..."></textarea>
+      </div>
+      <div class="field-group">
+        <label class="field-label">权益明细表</label>
+        <table class="table-inputs" id="rightsTable">
+          <thead>
+            <tr><th>权益种类</th><th>权益类型</th><th>时长/次数</th><th>溢出</th><th>上刊物料</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><input placeholder="品牌露出"></td><td><input placeholder="舞美露出"></td><td><input placeholder="776秒"></td><td><input placeholder=""></td><td><input placeholder=""></td></tr>
+          </tbody>
+        </table>
+        <button type="button" class="add-row-btn" onclick="addTableRow('rightsTable')">+ 添加一行</button>
+      </div>
+      <div class="field-group">
+        <label class="field-label">二身份客户权益</label>
+        <div class="field-desc">如有其他客户权益对比，请填写</div>
+        <textarea name="secondClientRights" rows="2" placeholder="例如：安慕希权益展示..."></textarea>
+      </div>
+      <div class="field-group">
+        <label class="field-label">客户权益秒数汇总</label>
+        <table class="table-inputs" id="clientSecondsTable">
+          <thead>
+            <tr><th>品牌</th><th>露出总时长（秒）</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><input placeholder="美团团购"></td><td><input placeholder="5454"></td></tr>
+          </tbody>
+        </table>
+        <button type="button" class="add-row-btn" onclick="addTableRow('clientSecondsTable')">+ 添加一行</button>
+      </div>
+      <div class="field-group">
+        <label class="field-label">上刊视频/截图</label>
+        <div class="file-upload" onclick="this.querySelector('input').click()">
+          <input type="file" multiple accept="image/*,video/*" data-field="rightsMedia" onchange="handleFiles(this)">
+          <div class="icon">🎬</div>
+          <div class="hint">上传上刊视频或截图</div>
+        </div>
+        <div class="file-list" id="list-rightsMedia"></div>
+      </div>
+    </div>
+
+    <!-- 6. 节目硬广 -->
+    <div class="section" data-section="ads">
+      <div class="section-title">
+        节目硬广
+        <span class="section-status status-empty" id="status-ads">未填写</span>
+      </div>
+      <div class="row">
+        <div class="col">
+          <div class="field-group">
+            <label class="field-label">硬广类型</label>
+            <input type="text" name="adTypes" placeholder="例如：全屏静态暂停、前贴片、5s口播、详情页品牌卡">
+          </div>
+        </div>
+        <div class="col">
+          <div class="field-group">
+            <label class="field-label">曝光总计</label>
+            <input type="text" name="adTotalExposure" placeholder="例如：1153万">
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <div class="field-group">
+            <label class="field-label">实时达成率</label>
+            <input type="text" name="adAchievementRate" placeholder="例如：223%">
+          </div>
+        </div>
+        <div class="col">
+          <div class="field-group">
+            <label class="field-label">整体完成进度</label>
+            <input type="text" name="adOverallProgress" placeholder="例如：8.23%">
+          </div>
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">硬广分端数据</label>
+        <table class="table-inputs" id="adsTable">
+          <thead>
+            <tr><th>资源</th><th>端</th><th>曝光PV</th><th>占比</th><th>点击率</th><th>备注</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><input placeholder="全屏暂停"></td><td><input placeholder="移动端"></td><td><input placeholder="5990745"></td><td><input placeholder="78%"></td><td><input placeholder="2.38%"></td><td><input placeholder=""></td></tr>
+          </tbody>
+        </table>
+        <button type="button" class="add-row-btn" onclick="addTableRow('adsTable')">+ 添加一行</button>
+      </div>
+      <div class="field-group">
+        <label class="field-label">硬广素材截图</label>
+        <div class="file-upload" onclick="this.querySelector('input').click()">
+          <input type="file" multiple accept="image/*" data-field="adsScreenshots" onchange="handleFiles(this)">
+          <div class="icon">📷</div>
+          <div class="hint">上传硬广素材截图</div>
+        </div>
+        <div class="file-list" id="list-adsScreenshots"></div>
+      </div>
+    </div>
+
+    <!-- 7. 品牌传播 -->
+    <div class="section" data-section="brand">
+      <div class="section-title">
+        品牌传播
+        <span class="section-status status-empty" id="status-brand">未填写</span>
+      </div>
+
+      <div class="collapsible open">
+        <div class="collapsible-header" onclick="toggleCollapsible(this)">商务传播</div>
+        <div class="collapsible-body">
+          <div class="field-group">
+            <label class="field-label">微博平台传播</label>
+            <textarea name="weiboSpread" rows="3" placeholder="贴热话题数、KOL投放、曝光互动数据..."></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label">小红书平台传播</label>
+            <textarea name="xiaohongshuSpread" rows="3" placeholder="达人笔记数、爆款笔记、曝光互动..."></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label">视频号平台传播</label>
+            <textarea name="videoChannelSpread" rows="3" placeholder="视频发布数、播放量、互动量..."></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label">腾讯视频弹幕/评论</label>
+            <textarea name="tencentComments" rows="2" placeholder="弹幕预埋效果、用户提及度..."></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label">传播截图</label>
+            <div class="file-upload" onclick="this.querySelector('input').click()">
+              <input type="file" multiple accept="image/*" data-field="brandScreenshots" onchange="handleFiles(this)">
+              <div class="icon">📷</div>
+              <div class="hint">上传各平台传播截图</div>
+            </div>
+            <div class="file-list" id="list-brandScreenshots"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="collapsible">
+        <div class="collapsible-header" onclick="toggleCollapsible(this)">内部宣推</div>
+        <div class="collapsible-body">
+          <div class="field-group">
+            <label class="field-label">内部宣推内容</label>
+            <textarea name="internalPromotion" rows="3" placeholder="工区海报张贴、平台推文推送..."></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label">素材上刊图</label>
+            <div class="file-upload" onclick="this.querySelector('input').click()">
+              <input type="file" multiple accept="image/*" data-field="internalScreenshots" onchange="handleFiles(this)">
+              <div class="icon">📷</div>
+              <div class="hint">上传工区海报、上刊图等</div>
+            </div>
+            <div class="file-list" id="list-internalScreenshots"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 8. 站内承接 -->
+    <div class="section" data-section="site">
+      <div class="section-title">
+        站内承接
+        <span class="section-status status-empty" id="status-site">未填写</span>
+      </div>
+      <div class="row">
+        <div class="col">
+          <div class="field-group">
+            <label class="field-label">主搜词</label>
+            <input type="text" name="searchKeyword" placeholder="例如：喜夜">
+          </div>
+        </div>
+        <div class="col">
+          <div class="field-group">
+            <label class="field-label">搜索QV总数</label>
+            <input type="text" name="searchQVTotal" placeholder="例如：2857">
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <div class="field-group">
+            <label class="field-label">搜索UV总数</label>
+            <input type="text" name="searchUVTotal" placeholder="例如：2648">
+          </div>
+        </div>
+        <div class="col">
+          <div class="field-group">
+            <label class="field-label">峰值日QV</label>
+            <input type="text" name="searchQVPeak" placeholder="例如：1081">
+          </div>
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">站内承接数据表</label>
+        <table class="table-inputs" id="siteTable">
+          <thead>
+            <tr><th>日期</th><th>搜索QV</th><th>搜索UV</th><th>QV_CTR</th><th>UV_CTR</th><th>意向UV</th><th>意向率</th><th>支付订单量</th><th>支付UV</th><th>搜索GTV</th><th>搜索实付GTV</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><input placeholder="2025-09-26"></td>
+              <td><input placeholder="1081"></td>
+              <td><input placeholder="998"></td>
+              <td><input placeholder="95.56%"></td>
+              <td><input placeholder="96.89%"></td>
+              <td><input placeholder="282"></td>
+              <td><input placeholder="28.26%"></td>
+              <td><input placeholder="7"></td>
+              <td><input placeholder="7"></td>
+              <td><input placeholder="633.39"></td>
+              <td><input placeholder="557.39"></td>
+            </tr>
+          </tbody>
+        </table>
+        <button type="button" class="add-row-btn" onclick="addTableRow('siteTable')">+ 添加一行</button>
+      </div>
+    </div>
+
+    <!-- 9. 填写人信息 -->
+    <div class="section" data-section="reporter">
+      <div class="section-title">
+        填写人信息
+        <span class="badge">必填</span>
+        <span class="section-status status-empty" id="status-reporter">未填写</span>
+      </div>
+      <div class="row">
+        <div class="col">
+          <div class="field-group">
+            <label class="field-label">填写人姓名<span class="required">*</span></label>
+            <input type="text" name="reporterName" placeholder="请输入姓名" required>
+          </div>
+        </div>
+        <div class="col">
+          <div class="field-group">
+            <label class="field-label">所属部门/合作方<span class="required">*</span></label>
+            <input type="text" name="reporterDept" placeholder="例如：美团团购市场部" required>
+          </div>
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">联系方式（MIS或邮箱）</label>
+        <input type="text" name="reporterContact" placeholder="例如：pengdanqi">
+      </div>
+      <div class="field-group">
+        <label class="field-label">备注/补充说明</label>
+        <textarea name="remarks" rows="2" placeholder="其他需要说明的内容"></textarea>
+      </div>
+    </div>
+
+    <div class="actions" id="normalActions">
+      <button type="button" class="btn btn-secondary" onclick="savePartial()">💾 保存我刚才填写的部分</button>
+      <button type="button" class="btn btn-primary" onclick="submitPartial()">📤 提交我的部分</button>
+    </div>
+  </form>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===================== 权限与状态管理 =====================
+let currentRole = 'normal'; // 'normal' | 'admin'
+const STORAGE_KEY = 'weeklyReportData';
+const ADMIN_KEY = 'weeklyReportAdmin'; // 标记是否已设置管理员
+
+// ===================== 角色切换 =====================
+function setRole(role) {
+  currentRole = role;
+  document.getElementById('currentRole').textContent = role === 'admin' ? '管理员' : '普通填写者';
+  document.getElementById('roleHint').textContent = role === 'admin' ? '可编辑所有内容，拥有导出和清空权限' : '只能填写自己负责的部分，可保存到页面内接力填写';
+  
+  document.getElementById('btnNormal').classList.toggle('active', role === 'normal');
+  document.getElementById('btnAdmin').classList.toggle('active', role === 'admin');
+  
+  // 显示/隐藏管理员面板
+  document.getElementById('adminPanel').classList.toggle('hidden', role !== 'admin');
+  
+  // 显示/隐藏普通用户操作按钮
+  document.getElementById('normalActions').classList.toggle('hidden', role === 'admin');
+  
+  applyRolePermissions();
+  updateProgress();
+  showToast(role === 'admin' ? '已切换为管理员模式' : '已切换为普通填写者模式');
+}
+
+function applyRolePermissions() {
+  const adminOnlySections = document.querySelectorAll('[data-admin-only="true"]');
+  const adminFields = document.querySelectorAll('[data-admin]');
+  
+  if (currentRole === 'admin') {
+    // 管理员：解锁所有
+    adminOnlySections.forEach(sec => {
+      sec.classList.remove('section-locked');
+      const notice = sec.querySelector('.lock-notice');
+      if (notice) notice.classList.add('hidden');
+    });
+    adminFields.forEach(f => f.disabled = false);
+    document.querySelectorAll('.add-row-btn').forEach(btn => btn.disabled = false);
+  } else {
+    // 普通用户：锁定管理员专属部分
+    adminOnlySections.forEach(sec => {
+      sec.classList.add('section-locked');
+      const notice = sec.querySelector('.lock-notice');
+      if (notice) notice.classList.remove('hidden');
+    });
+    adminFields.forEach(f => f.disabled = true);
+  }
+}
+
+// ===================== 进度条 =====================
+function updateProgress() {
+  const sections = document.querySelectorAll('.section[data-section]');
+  let filledSections = 0;
+  sections.forEach(sec => {
+    const sectionKey = sec.dataset.section;
+    const inputs = sec.querySelectorAll('input, textarea, select');
+    let hasValue = false;
+    inputs.forEach(inp => {
+      if (inp.value.trim() !== '') hasValue = true;
+    });
+    
+    // 更新每个section的状态标签
+    const statusEl = document.getElementById('status-' + sectionKey);
+    if (statusEl) {
+      if (hasValue) {
+        statusEl.textContent = '已填写';
+        statusEl.className = 'section-status status-complete';
+        filledSections++;
+      } else {
+        statusEl.textContent = '未填写';
+        statusEl.className = 'section-status status-empty';
+      }
+    }
+  });
+  const total = sections.length;
+  const percent = Math.round((filledSections / total) * 100);
+  document.getElementById('progressBar').style.width = percent + '%';
+  document.getElementById('progressPercent').textContent = percent + '%';
+  const hint = document.getElementById('progressHint');
+  if (percent >= 90) {
+    hint.textContent = '✅ 整体填写进度已达 ' + percent + '%，可以导出啦！';
+    hint.style.color = '#27ae60';
+  } else {
+    hint.textContent = '请完善以下信息，进度达到 90% 时可导出（当前 ' + percent + '%）';
+    hint.style.color = '#888';
+  }
+  return percent;
+}
+
+// ===================== 文件上传 =====================
+const formData = { files: {} };
+
+function handleFiles(input) {
+  const field = input.dataset.field;
+  const list = document.getElementById('list-' + field);
+  if (!formData.files[field]) formData.files[field] = [];
+  Array.from(input.files).forEach(file => {
+    formData.files[field].push(file);
+    const chip = document.createElement('div');
+    chip.className = 'file-chip';
+    if (file.type.startsWith('image/')) {
+      const url = URL.createObjectURL(file);
+      chip.innerHTML = `<img src="${url}" class="preview-img"><span>${file.name}</span><span class="remove" onclick="removeFile(this, '${field}', '${file.name}')">×</span>`;
+    } else if (file.type.startsWith('video/')) {
+      const url = URL.createObjectURL(file);
+      chip.innerHTML = `<video src="${url}" class="preview-video" controls muted></video><span>${file.name}</span><span class="remove" onclick="removeFile(this, '${field}', '${file.name}')">×</span>`;
+    } else {
+      chip.innerHTML = `<span>📎 ${file.name}</span><span class="remove" onclick="removeFile(this, '${field}', '${file.name}')">×</span>`;
+    }
+    list.appendChild(chip);
+  });
+  updateProgress();
+}
+
+function removeFile(el, field, fileName) {
+  const chip = el.closest('.file-chip');
+  chip.remove();
+  if (formData.files[field]) {
+    formData.files[field] = formData.files[field].filter(f => f.name !== fileName);
+  }
+  updateProgress();
+}
+
+// ===================== 表格行操作 =====================
+function addTableRow(tableId) {
+  const table = document.getElementById(tableId);
+  const tbody = table.querySelector('tbody');
+  const firstRow = tbody.querySelector('tr');
+  const newRow = document.createElement('tr');
+  const cells = firstRow.querySelectorAll('td');
+  cells.forEach(() => {
+    const td = document.createElement('td');
+    const inp = document.createElement('input');
+    inp.placeholder = '';
+    td.appendChild(inp);
+    newRow.appendChild(td);
+  });
+  tbody.appendChild(newRow);
+}
+
+// ===================== 折叠面板 =====================
+function toggleCollapsible(header) {
+  const collapsible = header.parentElement;
+  collapsible.classList.toggle('open');
+}
+
+// ===================== 提示 =====================
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// ===================== 收集数据 =====================
+function collectFormData() {
+  const fields = {};
+  document.querySelectorAll('#weeklyForm input, #weeklyForm textarea, #weeklyForm select').forEach(field => {
+    if (field.name) fields[field.name] = field.value.trim();
+  });
+  const tables = {};
+  document.querySelectorAll('.table-inputs').forEach(table => {
+    const id = table.id;
+    if (!id) return;
+    const rows = [];
+    table.querySelectorAll('tbody tr').forEach(tr => {
+      const rowData = [];
+      tr.querySelectorAll('input').forEach(inp => rowData.push(inp.value.trim()));
+      if (rowData.some(v => v !== '')) rows.push(rowData);
+    });
+    tables[id] = rows;
+  });
+  return { fields, tables, files: Object.keys(formData.files) };
+}
+
+function populateFormData(data) {
+  if (!data) return;
+  // 填充字段
+  Object.keys(data.fields || {}).forEach(key => {
+    const el = document.querySelector(`[name="${key}"]`);
+    if (el) el.value = data.fields[key];
+  });
+  // 填充表格
+  Object.keys(data.tables || {}).forEach(tableId => {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+    const tbody = table.querySelector('tbody');
+    const rows = data.tables[tableId];
+    if (!rows || rows.length === 0) return;
+    // 清空现有行，保留表头
+    tbody.innerHTML = '';
+    rows.forEach(rowData => {
+      const tr = document.createElement('tr');
+      rowData.forEach(cell => {
+        const td = document.createElement('td');
+        const inp = document.createElement('input');
+        inp.value = cell;
+        td.appendChild(inp);
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+  });
+}
+
+// ===================== 保存部分数据（接力填写） =====================
+function savePartial() {
+  const data = collectFormData();
+  const existing = loadFromStorage() || {};
+  // 合并：新数据覆盖旧数据
+  const merged = {
+    fields: { ...existing.fields, ...data.fields },
+    tables: { ...existing.tables, ...data.tables },
+    files: [...new Set([...(existing.files || []), ...(data.files || [])])]
+  };
+  saveToStorage(merged);
+  showToast('您填写的部分已保存到页面内，其他人可以接力填写');
+  updateProgress();
+}
+
+function submitPartial() {
+  const required = document.querySelectorAll('#weeklyForm [required]');
+  let missing = false;
+  required.forEach(el => {
+    if (!el.disabled && !el.value.trim()) {
+      missing = true;
+      el.style.borderColor = '#e74c3c';
+      setTimeout(() => el.style.borderColor = '', 2000);
+    }
+  });
+  if (missing) {
+    showToast('请填写必填项');
+    return;
+  }
+  savePartial();
+  showToast('提交成功！您负责的部分已保存');
+}
+
+// ===================== 存储管理 =====================
+function saveToStorage(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function loadFromStorage() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch (e) { return null; }
+}
+
+// ===================== 管理员功能 =====================
+function exportJson() {
+  if (currentRole !== 'admin') {
+    showToast('只有管理员可以导出数据');
+    return;
+  }
+  const data = collectFormData();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '周报数据_' + (data.fields.projectName || '未命名') + '_' + (data.fields.episode || '') + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('JSON数据已导出');
+}
+
+function exportPdf() {
+  if (currentRole !== 'admin') {
+    showToast('只有管理员可以导出PDF');
+    return;
+  }
+  // 使用浏览器打印功能生成PDF
+  const data = collectFormData();
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(generatePrintHtml(data));
+  printWindow.document.close();
+  setTimeout(() => {
+    printWindow.print();
+  }, 500);
+  showToast('PDF打印窗口已打开，请选择"保存为PDF"');
+}
+
+function generatePrintHtml(data) {
+  const f = data.fields || {};
+  const t = data.tables || {};
+  
+  let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>周报-${f.projectName || '综艺项目'}${f.episode || ''}</title>`;
+  html += `<style>body{font-family:Arial,sans-serif;padding:40px;line-height:1.6;color:#333;}h1{color:#667eea;}h2{color:#444;border-bottom:2px solid #667eea;padding-bottom:8px;}table{border-collapse:collapse;width:100%;margin:12px 0;}th,td{border:1px solid #ddd;padding:8px;text-align:left;}th{background:#f5f7fa;}tr:nth-child(even){background:#fafbfc;}.field{margin:8px 0;}</style></head><body>`;
+  html += `<h1>周报-${f.projectName || '综艺项目'}${f.episode || ''}</h1>`;
+  html += `<h2>核心结论</h2><p>${(f.coreConclusion || '').replace(/\n/g, '<br>')}</p>`;
+  html += `<h2>项目背景</h2><p>${(f.projectBackground || '').replace(/\n/g, '<br>')}</p>`;
+  
+  // 播出进度
+  html += `<h2>播出进度</h2>`;
+  if (t.scheduleTable && t.scheduleTable.length > 0) {
+    html += `<table><thead><tr><th>期数</th><th>播出日期</th><th>播出状态</th><th>核心权益</th></tr></thead><tbody>`;
+    t.scheduleTable.forEach(row => {
+      html += `<tr><td>${row[0]||''}</td><td>${row[1]||''}</td><td>${row[2]||''}</td><td>${row[3]||''}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+  }
+  
+  // 节目播出数据
+  html += `<h2>节目播出数据</h2>`;
+  html += `<div class="field"><strong>累积播放量：</strong>${f.totalPlayCount || ''}</div>`;
+  html += `<div class="field"><strong>站内热度峰值：</strong>${f.heatPeak || ''}</div>`;
+  html += `<div class="field"><strong>站内榜单表现：</strong>${f.platformRankings || ''}</div>`;
+  if (t.thirdPartyTable && t.thirdPartyTable.length > 0) {
+    html += `<table><thead><tr><th>榜单名称</th><th>排名/数据</th><th>持续天数</th></tr></thead><tbody>`;
+    t.thirdPartyTable.forEach(row => {
+      html += `<tr><td>${row[0]||''}</td><td>${row[1]||''}</td><td>${row[2]||''}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+  }
+  html += `<div class="field"><strong>社媒指数：</strong>${f.socialIndex || ''}</div>`;
+  
+  // 节目传播
+  html += `<h2>节目传播</h2>`;
+  html += `<div class="field"><strong>全网热搜总数：</strong>${f.hotSearchTotal || ''}</div>`;
+  if (t.hotSearchTable && t.hotSearchTable.length > 0) {
+    html += `<table><thead><tr><th>平台</th><th>热搜总数</th><th>主榜上榜数</th><th>主榜TOP个数</th><th>文娱榜上榜数</th><th>高位热搜内容</th></tr></thead><tbody>`;
+    t.hotSearchTable.forEach(row => {
+      html += `<tr><td>${row[0]||''}</td><td>${row[1]||''}</td><td>${row[2]||''}</td><td>${row[3]||''}</td><td>${row[4]||''}</td><td>${row[5]||''}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+  }
+  if (t.shortVideoTable && t.shortVideoTable.length > 0) {
+    html += `<table><thead><tr><th>平台</th><th>话题总播放量</th><th>新增播放量</th><th>发布数量</th><th>爆款数量</th><th>备注</th></tr></thead><tbody>`;
+    t.shortVideoTable.forEach(row => {
+      html += `<tr><td>${row[0]||''}</td><td>${row[1]||''}</td><td>${row[2]||''}</td><td>${row[3]||''}</td><td>${row[4]||''}</td><td>${row[5]||''}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+  }
+  if (t.mediaResourceTable && t.mediaResourceTable.length > 0) {
+    html += `<table><thead><tr><th>资源类型</th><th>资源点位</th><th>带品牌权益</th><th>备注</th></tr></thead><tbody>`;
+    t.mediaResourceTable.forEach(row => {
+      html += `<tr><td>${row[0]||''}</td><td>${row[1]||''}</td><td>${row[2]||''}</td><td>${row[3]||''}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+  }
+  html += `<div class="field"><strong>爆款作品：</strong>${f.hitWorksDesc || ''}</div>`;
+  
+  // 权益
+  html += `<h2>节目权益表现</h2>`;
+  html += `<div class="field">${f.rightsOverview || ''}</div>`;
+  if (t.rightsTable && t.rightsTable.length > 0) {
+    html += `<table><thead><tr><th>权益种类</th><th>权益类型</th><th>时长/次数</th><th>溢出</th><th>上刊物料</th></tr></thead><tbody>`;
+    t.rightsTable.forEach(row => {
+      html += `<tr><td>${row[0]||''}</td><td>${row[1]||''}</td><td>${row[2]||''}</td><td>${row[3]||''}</td><td>${row[4]||''}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+  }
+  html += `<div class="field"><strong>二身份客户权益：</strong>${f.secondClientRights || ''}</div>`;
+  if (t.clientSecondsTable && t.clientSecondsTable.length > 0) {
+    html += `<table><thead><tr><th>品牌</th><th>露出总时长（秒）</th></tr></thead><tbody>`;
+    t.clientSecondsTable.forEach(row => {
+      html += `<tr><td>${row[0]||''}</td><td>${row[1]||''}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+  }
+  
+  // 硬广
+  html += `<h2>节目硬广</h2>`;
+  html += `<div class="field">${f.adTypes || ''}，曝光总计${f.adTotalExposure || ''}，实时达成率${f.adAchievementRate || ''}，整体完成进度${f.adOverallProgress || ''}</div>`;
+  if (t.adsTable && t.adsTable.length > 0) {
+    html += `<table><thead><tr><th>资源</th><th>端</th><th>曝光PV</th><th>占比</th><th>点击率</th><th>备注</th></tr></thead><tbody>`;
+    t.adsTable.forEach(row => {
+      html += `<tr><td>${row[0]||''}</td><td>${row[1]||''}</td><td>${row[2]||''}</td><td>${row[3]||''}</td><td>${row[4]||''}</td><td>${row[5]||''}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+  }
+  
+  // 品牌传播
+  html += `<h2>品牌传播</h2>`;
+  html += `<div class="field"><strong>微博平台：</strong>${(f.weiboSpread || '').replace(/\n/g, '<br>')}</div>`;
+  html += `<div class="field"><strong>小红书平台：</strong>${(f.xiaohongshuSpread || '').replace(/\n/g, '<br>')}</div>`;
+  html += `<div class="field"><strong>视频号平台：</strong>${(f.videoChannelSpread || '').replace(/\n/g, '<br>')}</div>`;
+  html += `<div class="field"><strong>腾讯视频弹幕：</strong>${(f.tencentComments || '').replace(/\n/g, '<br>')}</div>`;
+  html += `<div class="field"><strong>内部宣推：</strong>${(f.internalPromotion || '').replace(/\n/g, '<br>')}</div>`;
+  
+  // 站内承接
+  html += `<h2>站内承接</h2>`;
+  html += `<div class="field">主搜词"${f.searchKeyword || ''}"，搜索QV总数${f.searchQVTotal || ''}，峰值日${f.searchQVPeak || ''}；搜索UV总数${f.searchUVTotal || ''}</div>`;
+  if (t.siteTable && t.siteTable.length > 0) {
+    html += `<table><thead><tr><th>日期</th><th>搜索QV</th><th>搜索UV</th><th>QV_CTR</th><th>UV_CTR</th><th>意向UV</th><th>意向率</th><th>支付订单量</th><th>支付UV</th><th>搜索GTV</th><th>搜索实付GTV</th></tr></thead><tbody>`;
+    t.siteTable.forEach(row => {
+      html += `<tr><td>${row[0]||''}</td><td>${row[1]||''}</td><td>${row[2]||''}</td><td>${row[3]||''}</td><td>${row[4]||''}</td><td>${row[5]||''}</td><td>${row[6]||''}</td><td>${row[7]||''}</td><td>${row[8]||''}</td><td>${row[9]||''}</td><td>${row[10]||''}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+  }
+  
+  html += `</body></html>`;
+  return html;
+}
+
+function createKmDoc() {
+  if (currentRole !== 'admin') {
+    showToast('只有管理员可以生成学城文档');
+    return;
+  }
+  const data = collectFormData();
+  const f = data.fields || {};
+  const t = data.tables || {};
+  
+  let md = `# 周报-${f.projectName || '综艺项目'}${f.episode || ''}\n\n`;
+  md += `##### **${f.episode || '本期'}节目核心结论：**\n\n`;
+  if (f.coreConclusion) {
+    const lines = f.coreConclusion.split('\n').filter(l => l.trim());
+    lines.forEach((line, idx) => { md += `${idx + 1}. ${line.replace(/^\d+\.\s*/, '')}\n`; });
+  }
+  md += '\n';
+  md += `##### 项目背景：\n\n${f.projectBackground || ''}\n\n`;
+  
+  md += `##### 播出进度：\n\n`;
+  if (t.scheduleTable && t.scheduleTable.length > 0) {
+    md += '| 期数 | 播出日期 | 播出状态 | 核心权益 |\n| --- | --- | --- | --- |\n';
+    t.scheduleTable.forEach(row => { md += `| ${row[0]||''} | ${row[1]||''} | ${row[2]||''} | ${row[3]||''} |\n`; });
+  }
+  md += '\n';
+  
+  md += `##### **节目播出：**\n\n`;
+  md += `1. 站内表现：${f.totalPlayCount ? '截至统计日期，首期累积播放量' + f.totalPlayCount : ''}。${f.heatPeak ? '站内热度峰值' + f.heatPeak : ''}。${f.platformRankings || ''}\n\n`;
+  if (t.thirdPartyTable && t.thirdPartyTable.length > 0) {
+    md += '2. 三方榜单：';
+    t.thirdPartyTable.forEach((row, idx) => { if (idx > 0) md += '；'; md += `${row[0]||''}${row[1]?' '+row[1]:''}${row[2]?'×'+row[2]:''}`; });
+    md += '\n\n';
+  }
+  md += `3. 社媒指数：${f.socialIndex || ''}\n\n`;
+  
+  md += `##### **节目传播：**\n\n`;
+  md += `1. 热搜：${f.hotSearchTotal ? '首期节目共收获全网热搜' + f.hotSearchTotal : ''}。\n\n`;
+  if (t.hotSearchTable && t.hotSearchTable.length > 0) {
+    md += '| 传播平台 | 热搜总数 | 主榜上榜数 | 主榜TOP个数 | 文娱榜上榜数 | 高位热搜内容 |\n| --- | --- | --- | --- | --- | --- |\n';
+    t.hotSearchTable.forEach(row => { md += `| ${row[0]||''} | ${row[1]||''} | ${row[2]||''} | ${row[3]||''} | ${row[4]||''} | ${row[5]||''} |\n`; });
+    md += '\n';
+  }
+  md += `2. 短视频：${f.hitWorksDesc || ''}\n\n`;
+  if (t.shortVideoTable && t.shortVideoTable.length > 0) {
+    md += '| 平台 | 话题总播放量 | 新增播放量 | 发布数量 | 爆款数量 | 备注 |\n| --- | --- | --- | --- | --- | --- |\n';
+    t.shortVideoTable.forEach(row => { md += `| ${row[0]||''} | ${row[1]||''} | ${row[2]||''} | ${row[3]||''} | ${row[4]||''} | ${row[5]||''} |\n`; });
+    md += '\n';
+  }
+  md += `3. 媒体平台/制作方宣推资源\n\n`;
+  if (t.mediaResourceTable && t.mediaResourceTable.length > 0) {
+    md += '| 资源类型 | 资源点位 | 带品牌权益 | 备注 |\n| --- | --- | --- | --- |\n';
+    t.mediaResourceTable.forEach(row => { md += `| ${row[0]||''} | ${row[1]||''} | ${row[2]||''} | ${row[3]||''} |\n`; });
+    md += '\n';
+  }
+  md += `4. 爆款作品：${f.hitWorksDesc || ''}\n\n`;
+  
+  md += `##### **节目权益表现**\n\n`;
+  md += `${f.rightsOverview || ''}\n\n`;
+  if (t.rightsTable && t.rightsTable.length > 0) {
+    md += '| 权益种类 | 权益类型 | 时长/次数 | 溢出 | 上刊物料 |\n| --- | --- | --- | --- | --- |\n';
+    t.rightsTable.forEach(row => { md += `| ${row[0]||''} | ${row[1]||''} | ${row[2]||''} | ${row[3]||''} | ${row[4]||''} |\n`; });
+    md += '\n';
+  }
+  if (f.secondClientRights) md += `二身份客户权益：${f.secondClientRights}\n\n`;
+  if (t.clientSecondsTable && t.clientSecondsTable.length > 0) {
+    md += `所有客户权益秒数汇总\n\n| 品牌 | 露出总时长（s） |\n| --- | --- |\n`;
+    t.clientSecondsTable.forEach(row => { md += `| ${row[0]||''} | ${row[1]||''} |\n`; });
+    md += '\n';
+  }
+  
+  md += `##### **节目硬广**\n\n`;
+  md += `${f.adTypes || ''}，曝光总计${f.adTotalExposure || ''}，实时达成率${f.adAchievementRate || ''}，整体完成进度${f.adOverallProgress || ''}。\n\n`;
+  if (t.adsTable && t.adsTable.length > 0) {
+    md += '| 资源 | 端 | 曝光PV | 占比 | 点击率 | 备注 |\n| --- | --- | --- | --- | --- | --- |\n';
+    t.adsTable.forEach(row => { md += `| ${row[0]||''} | ${row[1]||''} | ${row[2]||''} | ${row[3]||''} | ${row[4]||''} | ${row[5]||''} |\n`; });
+    md += '\n';
+  }
+  
+  md += `##### **品牌传播**\n\n`;
+  md += `1. **商务传播**\n\n**【微博平台】**${f.weiboSpread || ''}\n\n**【小红书平台】**${f.xiaohongshuSpread || ''}\n\n**【视频号平台】**${f.videoChannelSpread || ''}\n\n**【腾讯视频】**${f.tencentComments || ''}\n\n`;
+  md += `2. **内部宣推：**${f.internalPromotion || ''}\n\n`;
+  
+  md += `##### **站内承接**\n\n`;
+  md += `${f.searchKeyword ? '主搜词"' + f.searchKeyword + '"' : ''}站内搜索QV总数${f.searchQVTotal || ''}，峰值日${f.searchQVPeak || ''}；搜索UV总数${f.searchUVTotal || ''}。\n\n`;
+  if (t.siteTable && t.siteTable.length > 0) {
+    md += '| 日期 | 搜索QV | 搜索UV | QV_CTR | UV_CTR | 意向UV | 意向率 | 支付订单量 | 支付UV | 搜索GTV | 搜索实付GTV |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n';
+    t.siteTable.forEach(row => { md += `| ${row[0]||''} | ${row[1]||''} | ${row[2]||''} | ${row[3]||''} | ${row[4]||''} | ${row[5]||''} | ${row[6]||''} | ${row[7]||''} | ${row[8]||''} | ${row[9]||''} | ${row[10]||''} |\n`; });
+    md += '\n';
+  }
+  
+  // 下载Markdown文件
+  const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `周报-${f.projectName || '综艺项目'}${f.episode || ''}.md`;
+  a.click();
+  URL.revokeObjectURL(url);
+  
+  // 复制到剪贴板
+  navigator.clipboard.writeText(md).then(() => {
+    showToast('Markdown已生成并复制到剪贴板，可用oa-skills citadel createDocument --file xxx.md创建学城文档');
+  }).catch(() => {
+    showToast('Markdown已生成并下载，请复制内容后使用oa-skills citadel创建文档');
+  });
+}
+
+function clearAllData() {
+  if (currentRole !== 'admin') {
+    showToast('只有管理员可以清空数据');
+    return;
+  }
+  if (!confirm('确定要清空本周所有数据吗？此操作不可恢复，将删除所有已填写的内容。')) return;
+  
+  localStorage.removeItem(STORAGE_KEY);
+  
+  // 清空所有表单字段
+  document.querySelectorAll('#weeklyForm input, #weeklyForm textarea, #weeklyForm select').forEach(el => {
+    if (el.type === 'file') return;
+    el.value = '';
+  });
+  
+  // 清空表格（保留一行空行）
+  document.querySelectorAll('.table-inputs tbody').forEach(tbody => {
+    const firstRow = tbody.querySelector('tr');
+    tbody.innerHTML = '';
+    if (firstRow) {
+      const newRow = document.createElement('tr');
+      firstRow.querySelectorAll('td').forEach(() => {
+        const td = document.createElement('td');
+        const inp = document.createElement('input');
+        inp.placeholder = '';
+        td.appendChild(inp);
+        newRow.appendChild(td);
+      });
+      tbody.appendChild(newRow);
+    }
+  });
+  
+  // 清空文件
+  formData.files = {};
+  document.querySelectorAll('.file-list').forEach(list => list.innerHTML = '');
+  
+  updateProgress();
+  showToast('本周数据已清空，可以开始新一轮收集');
+}
+
+// ===================== 初始化 =====================
+window.addEventListener('DOMContentLoaded', () => {
+  // 加载已有数据
+  const saved = loadFromStorage();
+  if (saved) {
+    populateFormData(saved);
+    showToast('已加载之前保存的数据');
+  }
+  
+  // 默认普通用户模式
+  setRole('normal');
+  
+  // 监听所有输入变化更新进度
+  document.querySelectorAll('#weeklyForm input, #weeklyForm textarea, #weeklyForm select').forEach(field => {
+    field.addEventListener('input', updateProgress);
+    field.addEventListener('change', updateProgress);
+  });
+  
+  updateProgress();
+});
+</script>
+</body>
+</html>

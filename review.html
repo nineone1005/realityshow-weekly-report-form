@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>周报数据审核与生成</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: #f5f7fa;
+    margin: 0; padding: 0;
+    color: #333;
+  }
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 24px 16px 80px;
+  }
+  .header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 32px 24px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+  .header h1 { margin: 0 0 8px; font-size: 24px; }
+  .header p { margin: 0; opacity: 0.9; font-size: 14px; }
+  .upload-area {
+    background: white;
+    border-radius: 12px;
+    padding: 40px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    text-align: center;
+    border: 2px dashed #d9d9d9;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .upload-area:hover { border-color: #667eea; background: #f8f9ff; }
+  .upload-area input { display: none; }
+  .upload-area .icon { font-size: 48px; margin-bottom: 12px; }
+  .upload-area .title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+  .upload-area .desc { font-size: 14px; color: #888; }
+  .section {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .section-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f0f0f0;
+    color: #222;
+  }
+  .data-preview {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 16px;
+    font-size: 14px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+    font-size: 13px;
+  }
+  .data-table th, .data-table td {
+    border: 1px solid #e0e0e0;
+    padding: 8px 12px;
+    text-align: left;
+  }
+  .data-table th {
+    background: #f5f7fa;
+    font-weight: 600;
+  }
+  .data-table tr:nth-child(even) { background: #fafbfc; }
+  .field-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 14px;
+  }
+  .field-row:last-child { border-bottom: none; }
+  .field-label { font-weight: 600; color: #555; }
+  .field-value { color: #333; text-align: right; max-width: 60%; }
+  .actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 32px;
+    position: sticky;
+    bottom: 16px;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 14px 28px;
+    border-radius: 10px;
+    border: none;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+  }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-secondary {
+    background: #f0f0f0;
+    color: #555;
+  }
+  .btn-secondary:hover { background: #e4e4e4; }
+  .empty-state {
+    text-align: center;
+    padding: 60px 24px;
+    color: #888;
+  }
+  .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+  .badge {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: #e8ecf1;
+    color: #667eea;
+    margin-left: 8px;
+  }
+  .badge-success { background: #d4edda; color: #155724; }
+  .toast {
+    position: fixed;
+    top: 20px; left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+  .file-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f0f4ff;
+    color: #667eea;
+    padding: 4px 10px;
+    border-radius: 16px;
+    font-size: 13px;
+    margin: 4px;
+  }
+  .media-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .media-grid img {
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #eee;
+  }
+  .media-grid video {
+    width: 100%;
+    height: 100px;
+    border-radius: 8px;
+    border: 1px solid #eee;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>周报数据审核与生成</h1>
+    <p>上传合作方提交的 JSON 数据文件，预览并生成学城周报文档</p>
+  </div>
+
+  <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+    <input type="file" id="fileInput" accept=".json" onchange="handleFileUpload(event)">
+    <div class="icon">📂</div>
+    <div class="title">点击上传 JSON 数据文件</div>
+    <div class="desc">支持从表单页面导出的 .json 文件</div>
+  </div>
+
+  <div id="previewArea" style="display:none;">
+    <div class="section">
+      <div class="section-title">基本信息 <span class="badge badge-success" id="basicBadge"></span></div>
+      <div id="basicPreview"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">播出进度</div>
+      <div id="schedulePreview"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">节目播出数据</div>
+      <div id="broadcastPreview"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">节目传播</div>
+      <div id="spreadPreview"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">节目权益表现</div>
+      <div id="rightsPreview"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">节目硬广</div>
+      <div id="adsPreview"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">品牌传播</div>
+      <div id="brandPreview"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">站内承接</div>
+      <div id="sitePreview"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">填写人信息</div>
+      <div id="reporterPreview"></div>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="btn btn-secondary" onclick="location.reload()">🔄 重新上传</button>
+      <button type="button" class="btn btn-primary" onclick="generateKmDoc()">📄 生成学城文档</button>
+    </div>
+  </div>
+
+  <div class="empty-state" id="emptyState" style="display:none;">
+    <div class="icon">📄</div>
+    <div>暂无数据，请先上传 JSON 文件</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let currentData = null;
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+function handleFileUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      currentData = JSON.parse(e.target.result);
+      renderPreview(currentData);
+      document.getElementById('uploadArea').style.display = 'none';
+      document.getElementById('previewArea').style.display = 'block';
+      showToast('数据加载成功');
+    } catch (err) {
+      alert('文件解析失败，请确保上传的是有效的 JSON 文件');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function renderFieldRow(label, value) {
+  if (!value || value === '') return '';
+  return `<div class="field-row"><span class="field-label">${label}</span><span class="field-value">${value}</span></div>`;
+}
+
+function renderTable(headers, rows) {
+  if (!rows || rows.length === 0) return '<div style="color:#888;font-size:13px;">暂无数据</div>';
+  let html = '<table class="data-table"><thead><tr>';
+  headers.forEach(h => html += `<th>${h}</th>`);
+  html += '</tr></thead><tbody>';
+  rows.forEach(row => {
+    html += '<tr>';
+    row.forEach(cell => html += `<td>${cell || ''}</td>`);
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  return html;
+}
+
+function renderPreview(data) {
+  const f = data.fields || {};
+  const t = data.tables || {};
+
+  // 基本信息
+  document.getElementById('basicBadge').textContent = f.projectName || '未命名';
+  document.getElementById('basicPreview').innerHTML =
+    renderFieldRow('项目名称', f.projectName) +
+    renderFieldRow('期数', f.episode) +
+    renderFieldRow('播出平台', f.platform) +
+    renderFieldRow('播出日期', f.airDate) +
+    renderFieldRow('项目背景', f.projectBackground) +
+    renderFieldRow('核心结论', f.coreConclusion);
+
+  // 播出进度
+  document.getElementById('schedulePreview').innerHTML =
+    renderFieldRow('播出状态', f.airStatus) +
+    renderFieldRow('核心权益', f.coreRights) +
+    '<div style="margin-top:12px;"><strong>播出计划表</strong></div>' +
+    renderTable(['期数','播出日期','播出状态','核心权益'], t.scheduleTable || []);
+
+  // 节目播出数据
+  document.getElementById('broadcastPreview').innerHTML =
+    renderFieldRow('累积播放量', f.totalPlayCount) +
+    renderFieldRow('站内热度峰值', f.heatPeak) +
+    renderFieldRow('保底单期播放量', f.guaranteedPlay) +
+    renderFieldRow('达成率', f.playAchievementRate) +
+    renderFieldRow('站内榜单表现', f.platformRankings) +
+    '<div style="margin-top:12px;"><strong>三方榜单数据</strong></div>' +
+    renderTable(['榜单名称','排名/数据','持续天数'], t.thirdPartyTable || []) +
+    '<div style="margin-top:12px;"><strong>社媒指数</strong></div>' +
+    renderFieldRow('', f.socialIndex);
+
+  // 节目传播
+  document.getElementById('spreadPreview').innerHTML =
+    renderFieldRow('全网热搜总数', f.hotSearchTotal) +
+    renderFieldRow('统计截止时间', f.hotSearchDeadline) +
+    '<div style="margin-top:12px;"><strong>各平台热搜分布</strong></div>' +
+    renderTable(['平台','热搜总数','主榜上榜数','主榜TOP个数','文娱榜上榜数','高位热搜内容'], t.hotSearchTable || []) +
+    '<div style="margin-top:12px;"><strong>短视频数据</strong></div>' +
+    renderTable(['平台','话题总播放量','新增播放量','发布数量','爆款数量','备注'], t.shortVideoTable || []) +
+    '<div style="margin-top:12px;"><strong>宣推资源</strong></div>' +
+    renderTable(['资源类型','资源点位','带品牌权益','备注'], t.mediaResourceTable || []) +
+    renderFieldRow('爆款作品', f.hitWorksDesc);
+
+  // 节目权益
+  document.getElementById('rightsPreview').innerHTML =
+    renderFieldRow('权益总览', f.rightsOverview) +
+    '<div style="margin-top:12px;"><strong>权益明细</strong></div>' +
+    renderTable(['权益种类','权益类型','时长/次数','溢出','上刊物料'], t.rightsTable || []) +
+    renderFieldRow('二身份客户权益', f.secondClientRights) +
+    '<div style="margin-top:12px;"><strong>客户权益秒数汇总</strong></div>' +
+    renderTable(['品牌','露出总时长（秒）'], t.clientSecondsTable || []);
+
+  // 硬广
+  document.getElementById('adsPreview').innerHTML =
+    renderFieldRow('硬广类型', f.adTypes) +
+    renderFieldRow('曝光总计', f.adTotalExposure) +
+    renderFieldRow('实时达成率', f.adAchievementRate) +
+    renderFieldRow('整体完成进度', f.adOverallProgress) +
+    '<div style="margin-top:12px;"><strong>硬广分端数据</strong></div>' +
+    renderTable(['资源','端','曝光PV','占比','点击率','备注'], t.adsTable || []);
+
+  // 品牌传播
+  document.getElementById('brandPreview').innerHTML =
+    renderFieldRow('微博传播', f.weiboSpread) +
+    renderFieldRow('小红书传播', f.xiaohongshuSpread) +
+    renderFieldRow('视频号传播', f.videoChannelSpread) +
+    renderFieldRow('腾讯视频弹幕', f.tencentComments) +
+    renderFieldRow('内部宣推', f.internalPromotion);
+
+  // 站内承接
+  document.getElementById('sitePreview').innerHTML =
+    renderFieldRow('主搜词', f.searchKeyword) +
+    renderFieldRow('搜索QV总数', f.searchQVTotal) +
+    renderFieldRow('搜索UV总数', f.searchUVTotal) +
+    renderFieldRow('峰值日QV', f.searchQVPeak) +
+    '<div style="margin-top:12px;"><strong>站内承接数据表</strong></div>' +
+    renderTable(['日期','搜索QV','搜索UV','QV_CTR','UV_CTR','意向UV','意向率','支付订单量','支付UV','搜索GTV','搜索实付GTV'], t.siteTable || []);
+
+  // 填写人
+  document.getElementById('reporterPreview').innerHTML =
+    renderFieldRow('填写人', f.reporterName) +
+    renderFieldRow('部门/合作方', f.reporterDept) +
+    renderFieldRow('联系方式', f.reporterContact) +
+    renderFieldRow('备注', f.remarks);
+}
+
+function generateKmDoc() {
+  if (!currentData) return;
+  const f = currentData.fields || {};
+  const t = currentData.tables || {};
+
+  // 生成学城 XML 格式的 Markdown 内容
+  let md = `# 周报-${f.projectName || '综艺项目'}${f.episode || ''}\n\n`;
+
+  md += `##### **${f.episode || '本期'}节目核心结论：**\n\n`;
+  if (f.coreConclusion) {
+    const lines = f.coreConclusion.split('\n').filter(l => l.trim());
+    lines.forEach((line, idx) => {
+      md += `${idx + 1}. ${line.replace(/^\d+\.\s*/, '')}\n`;
+    });
+  }
+  md += '\n';
+
+  md += `##### 项目背景：\n\n${f.projectBackground || ''}\n\n`;
+
+  md += `##### 播出进度：\n\n`;
+  if (t.scheduleTable && t.scheduleTable.length > 0) {
+    md += '| 期数 | 播出日期 | 播出状态 | 核心权益 |\n';
+    md += '| --- | --- | --- | --- |\n';
+    t.scheduleTable.forEach(row => {
+      md += `| ${row[0] || ''} | ${row[1] || ''} | ${row[2] || ''} | ${row[3] || ''} |\n`;
+    });
+  }
+  md += '\n';
+
+  md += `##### **节目播出：**\n\n`;
+  md += `1. 站内表现：${f.totalPlayCount ? '截至统计日期，首期累积播放量' + f.totalPlayCount : ''}。${f.heatPeak ? '站内热度峰值' + f.heatPeak : ''}。${f.platformRankings || ''}\n\n`;
+
+  if (t.thirdPartyTable && t.thirdPartyTable.length > 0) {
+    md += '2. 三方榜单：';
+    t.thirdPartyTable.forEach(row => {
+      md += `${row[0] || ''}${row[1] ? ' ' + row[1] : ''}${row[2] ? '×' + row[2] : ''}；`;
+    });
+    md += '\n\n';
+  }
+
+  md += `3. 社媒指数：${f.socialIndex || ''}\n\n`;
+
+  md += `##### **节目传播：**\n\n`;
+  md += `1. 热搜：${f.hotSearchTotal ? '首期节目共收获全网热搜' + f.hotSearchTotal : ''}。\n\n`;
+  if (t.hotSearchTable && t.hotSearchTable.length > 0) {
+    md += '| 传播平台 | 热搜总数 | 主榜上榜数 | 主榜TOP个数 | 文娱榜上榜数 | 高位热搜内容 |\n';
+    md += '| --- | --- | --- | --- | --- | --- |\n';
+    t.hotSearchTable.forEach(row => {
+      md += `| ${row[0] || ''} | ${row[1] || ''} | ${row[2] || ''} | ${row[3] || ''} | ${row[4] || ''} | ${row[5] || ''} |\n`;
+    });
+    md += '\n';
+  }
+
+  md += `2. 短视频：${f.hitWorksDesc || ''}\n\n`;
+  if (t.shortVideoTable && t.shortVideoTable.length > 0) {
+    md += '| 平台 | 话题总播放量 | 新增播放量 | 发布数量 | 爆款数量 | 备注 |\n';
+    md += '| --- | --- | --- | --- | --- | --- |\n';
+    t.shortVideoTable.forEach(row => {
+      md += `| ${row[0] || ''} | ${row[1] || ''} | ${row[2] || ''} | ${row[3] || ''} | ${row[4] || ''} | ${row[5] || ''} |\n`;
+    });
+    md += '\n';
+  }
+
+  md += `3. 媒体平台/制作方宣推资源\n\n`;
+  if (t.mediaResourceTable && t.mediaResourceTable.length > 0) {
+    md += '| 资源类型 | 资源点位 | 带品牌权益 | 备注 |\n';
+    md += '| --- | --- | --- | --- |\n';
+    t.mediaResourceTable.forEach(row => {
+      md += `| ${row[0] || ''} | ${row[1] || ''} | ${row[2] || ''} | ${row[3] || ''} |\n`;
+    });
+    md += '\n';
+  }
+
+  md += `4. 爆款作品：${f.hitWorksDesc || ''}\n\n`;
+
+  md += `##### **节目权益表现**\n\n`;
+  md += `${f.rightsOverview || ''}\n\n`;
+  if (t.rightsTable && t.rightsTable.length > 0) {
+    md += '| 权益种类 | 权益类型 | 时长/次数 | 溢出 | 上刊物料 |\n';
+    md += '| --- | --- | --- | --- | --- |\n';
+    t.rightsTable.forEach(row => {
+      md += `| ${row[0] || ''} | ${row[1] || ''} | ${row[2] || ''} | ${row[3] || ''} | ${row[4] || ''} |\n`;
+    });
+    md += '\n';
+  }
+
+  if (f.secondClientRights) {
+    md += `二身份客户权益：${f.secondClientRights}\n\n`;
+  }
+
+  if (t.clientSecondsTable && t.clientSecondsTable.length > 0) {
+    md += `所有客户权益秒数汇总\n\n`;
+    md += '| 品牌 | 露出总时长（s） |\n';
+    md += '| --- | --- |\n';
+    t.clientSecondsTable.forEach(row => {
+      md += `| ${row[0] || ''} | ${row[1] || ''} |\n`;
+    });
+    md += '\n';
+  }
+
+  md += `##### **节目硬广**\n\n`;
+  md += `${f.adTypes || ''}，曝光总计${f.adTotalExposure || ''}，实时达成率${f.adAchievementRate || ''}，整体完成进度${f.adOverallProgress || ''}。\n\n`;
+  if (t.adsTable && t.adsTable.length > 0) {
+    md += '| 资源 | 端 | 曝光PV | 占比 | 点击率 | 备注 |\n';
+    md += '| --- | --- | --- | --- | --- | --- |\n';
+    t.adsTable.forEach(row => {
+      md += `| ${row[0] || ''} | ${row[1] || ''} | ${row[2] || ''} | ${row[3] || ''} | ${row[4] || ''} | ${row[5] || ''} |\n`;
+    });
+    md += '\n';
+  }
+
+  md += `##### **品牌传播**\n\n`;
+  md += `1. **商务传播**\n\n`;
+  md += `**【微博平台】**${f.weiboSpread || ''}\n\n`;
+  md += `**【小红书平台】**${f.xiaohongshuSpread || ''}\n\n`;
+  md += `**【视频号平台】**${f.videoChannelSpread || ''}\n\n`;
+  md += `**【腾讯视频】**${f.tencentComments || ''}\n\n`;
+  md += `2. **内部宣推：**${f.internalPromotion || ''}\n\n`;
+
+  md += `##### **站内承接**\n\n`;
+  md += `${f.searchKeyword ? '主搜词"' + f.searchKeyword + '"' : ''}站内搜索QV总数${f.searchQVTotal || ''}，峰值日${f.searchQVPeak || ''}；搜索UV总数${f.searchUVTotal || ''}。\n\n`;
+  if (t.siteTable && t.siteTable.length > 0) {
+    md += '| 日期 | 搜索QV | 搜索UV | QV_CTR | UV_CTR | 意向UV | 意向率 | 支付订单量 | 支付UV | 搜索GTV | 搜索实付GTV |\n';
+    md += '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n';
+    t.siteTable.forEach(row => {
+      md += `| ${row[0] || ''} | ${row[1] || ''} | ${row[2] || ''} | ${row[3] || ''} | ${row[4] || ''} | ${row[5] || ''} | ${row[6] || ''} | ${row[7] || ''} | ${row[8] || ''} | ${row[9] || ''} | ${row[10] || ''} |\n`;
+    });
+    md += '\n';
+  }
+
+  // 下载 Markdown 文件
+  const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `周报-${f.projectName || '综艺项目'}${f.episode || ''}.md`;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  showToast('Markdown 文件已生成并下载');
+
+  // 同时复制到剪贴板
+  navigator.clipboard.writeText(md).then(() => {
+    showToast('内容已复制到剪贴板，可直接粘贴到学城');
+  }).catch(() => {});
+}
+</script>
+</body>
+</html>
