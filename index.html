@@ -446,7 +446,6 @@
     <div class="progress-bar-bg">
       <div class="progress-bar-fill" id="progressBar"></div>
     </div>
-    <div class="progress-hint" id="progressHint">请完善以下信息，进度达到 90% 时将通知审核人</div>
   </div>
 
   <!-- 管理员面板（仅管理员可见） -->
@@ -1136,14 +1135,6 @@ function updateProgress() {
   const percent = Math.round((filledSections / total) * 100);
   document.getElementById('progressBar').style.width = percent + '%';
   document.getElementById('progressPercent').textContent = percent + '%';
-  const hint = document.getElementById('progressHint');
-  if (percent >= 90) {
-    hint.textContent = '✅ 整体填写进度已达 ' + percent + '%，可以导出啦！';
-    hint.style.color = '#27ae60';
-  } else {
-    hint.textContent = '请完善以下信息，进度达到 90% 时可导出（当前 ' + percent + '%）';
-    hint.style.color = '#888';
-  }
   return percent;
 }
 
