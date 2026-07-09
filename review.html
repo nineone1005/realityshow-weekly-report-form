@@ -253,6 +253,7 @@
 
     <div class="actions">
       <button type="button" class="btn btn-secondary" onclick="location.reload()">🔄 重新上传</button>
+      <button type="button" class="btn btn-secondary" onclick="importToForm()">📥 导入到表单</button>
       <button type="button" class="btn btn-primary" onclick="generateKmDoc()">📄 生成学城文档</button>
     </div>
   </div>
@@ -398,6 +399,24 @@ function renderPreview(data) {
     renderFieldRow('部门/合作方', f.reporterDept) +
     renderFieldRow('联系方式', f.reporterContact) +
     renderFieldRow('备注', f.remarks);
+}
+
+function importToForm() {
+  if (!currentData) {
+    showToast('请先上传JSON文件');
+    return;
+  }
+  
+  // 将数据存储到LocalStorage，使用与主表单相同的key
+  const STORAGE_KEY = 'weeklyReportData';
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(currentData));
+  
+  showToast('数据已导入到表单！请打开主表单页面查看');
+  
+  // 显示确认对话框
+  if (confirm('数据已导入成功！\n\n是否现在跳转到主表单页面查看？\n（跳转后请刷新页面以加载新数据）')) {
+    window.open('index.html', '_blank');
+  }
 }
 
 function generateKmDoc() {

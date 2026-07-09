@@ -992,7 +992,7 @@
 
     <div class="actions" id="normalActions">
       <button type="button" class="btn btn-secondary" onclick="savePartial()">💾 保存我刚才填写的部分</button>
-      <button type="button" class="btn btn-primary" onclick="submitPartial()">📤 提交我的部分</button>
+      <button type="button" class="btn btn-primary" onclick="submitPartial()">📤 导出JSON并提交</button>
     </div>
   </form>
 </div>
@@ -1234,8 +1234,28 @@ function submitPartial() {
     showToast('请填写必填项');
     return;
   }
-  savePartial();
-  showToast('提交成功！您负责的部分已保存');
+  
+  // 收集数据并导出JSON文件
+  const data = collectFormData();
+  const f = data.fields || {};
+  
+  // 生成规范的文件名：周报_项目名称_期数_填写人姓名_日期.json
+  const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const projectName = (f.projectName || '未命名').replace(/[\\/:*?"<>|]/g, '_');
+  const episode = (f.episode || '').replace(/[\\/:*?"<>|]/g, '_');
+  const reporter = (f.reporterName || '匿名').replace(/[\\/:*?"<>|]/g, '_');
+  const fileName = `周报_${projectName}_${episode}_${reporter}_${dateStr}.json`;
+  
+  // 导出JSON文件
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  a.click();
+  URL.revokeObjectURL(url);
+  
+  showToast('提交成功！JSON文件已导出，请通过邮件/大象发送给管理员');
 }
 
 // ===================== 存储管理 =====================
