@@ -454,7 +454,7 @@
     <div class="admin-actions">
       <button class="admin-btn admin-btn-primary" onclick="exportJson()">📤 导出JSON数据</button>
       <button class="admin-btn admin-btn-primary" onclick="exportPdf()">📄 导出PDF</button>
-      <button class="admin-btn admin-btn-primary" onclick="createKmDoc()">🔗 生成学城文档</button>
+      <button class="admin-btn admin-btn-primary" onclick="createKmDoc()">📦 导出数据包（发给AI生成学城文档）</button>
       <button class="admin-btn admin-btn-primary" onclick="importJsonFile()">📥 导入JSON文件</button>
       <button class="admin-btn admin-btn-danger" onclick="clearAllData()">🗑️ 清空本周数据</button>
     </div>
@@ -1221,7 +1221,53 @@ function collectFormData() {
     });
     tables[id] = rows;
   });
-  return { fields, tables, files: Object.keys(formData.files) };
+  
+  // 收集文件数据（转换为Base64）
+  const files = {};
+  Object.keys(formData.files).forEach(field => {
+    files[field] = formData.files[field].map(file => ({
+      name: file.name,
+      type: file.type,
+      size: file.size
+    }));
+  });
+  
+  return { fields, tables, files };
+}
+
+// 异步收集完整数据（包含Base64文件内容）
+async function collectFullDataWithFiles() {
+  const data = collectFormData();
+  
+  // 将文件转换为Base64
+  const fileBase64 = {};
+  for (const field of Object.keys(formData.files)) {
+    fileBase64[field] = [];
+    for (const file of formData.files[field]) {
+      try {
+        const base64 = await fileToBase64(file);
+        fileBase64[field].push({
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          data: base64
+        });
+      } catch (e) {
+        console.error('文件转换失败:', file.name, e);
+      }
+    }
+  }
+  
+  return { ...data, fileBase64 };
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 function populateFormData(data) {
@@ -1456,15 +1502,48 @@ function generatePrintHtml(data) {
   return html;
 }
 
-function createKmDoc() {
-  const data = collectFormData();
+async function createKmDoc() {
+  showToast('正在收集数据，请稍候...');
+  
+  const data = await collectFullDataWithFiles();
+  const f = data.fields || {};
+  
+  // 生成文件名
+  const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const projectName = (f.projectName || '未命名').replace(/[\\/:*?"<>|]/g, '_');
+  const episode = (f.episode || '').replace(/[\\/:*?"<>|]/g, '_');
+  const fileName = `周报数据包_${projectName}_${episode}_${dateStr}.json`;
+  
+  // 导出完整数据包（包含Base64文件）
+  const jsonStr = JSON.stringify(data, null, 2);
+  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  a.click();
+  URL.revokeObjectURL(url);
+  
+  // 同时生成纯文本摘要到剪贴板
+  const summary = generateSummaryText(data);
+  navigator.clipboard.writeText(summary).then(() => {
+    showToast('✅ 数据包已导出！\n📋 摘要已复制到剪贴板\n\n请把下载的JSON文件发送给我，我来帮你创建学城文档');
+  }).catch(() => {
+    showToast('✅ 数据包已导出！\n\n请把下载的JSON文件发送给我，我来帮你创建学城文档');
+  });
+}
+
+// 生成摘要文本，方便用户粘贴
+function generateSummaryText(data) {
   const f = data.fields || {};
   const t = data.tables || {};
   
-  let md = `# 周报-${f.projectName || '综艺项目'}${f.episode || ''}\n\n`;
-  md += `##### **${f.episode || '本期'}节目核心结论：**\n\n`;
+  let text = `【综艺项目周报数据包】\n`;
+  text += `项目名称：${f.projectName || '未填写'}\n`;
+  text += `期数：${f.episode || '未填写'}\n`;
+  text += `播出平台：${f.platform || '未填写'}\n`;
+  text += `\n【核心结论摘要】\n`;
   
-  // 自动汇总各部分的"本项核心结论"
   const conclusions = [
     { title: '播出进度', content: f.scheduleConclusion },
     { title: '节目播出数据', content: f.broadcastConclusion },
@@ -1475,106 +1554,30 @@ function createKmDoc() {
     { title: '站内承接', content: f.siteConclusion }
   ];
   
-  let conclusionIndex = 1;
+  let idx = 1;
   conclusions.forEach(item => {
     if (item.content && item.content.trim()) {
-      md += `${conclusionIndex}. **${item.title}：**${item.content.trim()}\n`;
-      conclusionIndex++;
+      text += `${idx}. ${item.title}：${item.content.trim()}\n`;
+      idx++;
     }
   });
   
-  if (conclusionIndex === 1) {
-    md += '（暂无核心结论，请各部分填写人填写"本项核心结论"）\n';
-  }
-  md += '\n';
-  md += `##### 项目背景：\n\n${f.projectBackground || ''}\n\n`;
-  
-  md += `##### 播出进度：\n\n`;
-  if (t.scheduleTable && t.scheduleTable.length > 0) {
-    md += '| 期数 | 播出日期 | 播出状态 | 核心权益 |\n| --- | --- | --- | --- |\n';
-    t.scheduleTable.forEach(row => { md += `| ${row[0]||''} | ${row[1]||''} | ${row[2]||''} | ${row[3]||''} |\n`; });
-  }
-  md += '\n';
-  
-  md += `##### **节目播出：**\n\n`;
-  md += `1. 站内表现：${f.totalPlayCount ? '截至统计日期，首期累积播放量' + f.totalPlayCount : ''}。${f.heatPeak ? '站内热度峰值' + f.heatPeak : ''}。${f.platformRankings || ''}\n\n`;
-  if (t.thirdPartyTable && t.thirdPartyTable.length > 0) {
-    md += '2. 三方榜单：';
-    t.thirdPartyTable.forEach((row, idx) => { if (idx > 0) md += '；'; md += `${row[0]||''}${row[1]?' '+row[1]:''}${row[2]?'×'+row[2]:''}`; });
-    md += '\n\n';
-  }
-  md += `3. 社媒指数：${f.socialIndex || ''}\n\n`;
-  
-  md += `##### **节目传播：**\n\n`;
-  md += `1. 热搜：${f.hotSearchTotal ? '首期节目共收获全网热搜' + f.hotSearchTotal : ''}。\n\n`;
-  if (t.hotSearchTable && t.hotSearchTable.length > 0) {
-    md += '| 传播平台 | 热搜总数 | 主榜上榜数 | 主榜TOP个数 | 文娱榜上榜数 | 高位热搜内容 |\n| --- | --- | --- | --- | --- | --- |\n';
-    t.hotSearchTable.forEach(row => { md += `| ${row[0]||''} | ${row[1]||''} | ${row[2]||''} | ${row[3]||''} | ${row[4]||''} | ${row[5]||''} |\n`; });
-    md += '\n';
-  }
-  md += `2. 短视频：${f.hitWorksDesc || ''}\n\n`;
-  if (t.shortVideoTable && t.shortVideoTable.length > 0) {
-    md += '| 平台 | 话题总播放量 | 新增播放量 | 发布数量 | 爆款数量 | 备注 |\n| --- | --- | --- | --- | --- | --- |\n';
-    t.shortVideoTable.forEach(row => { md += `| ${row[0]||''} | ${row[1]||''} | ${row[2]||''} | ${row[3]||''} | ${row[4]||''} | ${row[5]||''} |\n`; });
-    md += '\n';
-  }
-  md += `3. 媒体平台/制作方宣推资源\n\n`;
-  if (t.mediaResourceTable && t.mediaResourceTable.length > 0) {
-    md += '| 资源类型 | 资源点位 | 带品牌权益 | 备注 |\n| --- | --- | --- | --- |\n';
-    t.mediaResourceTable.forEach(row => { md += `| ${row[0]||''} | ${row[1]||''} | ${row[2]||''} | ${row[3]||''} |\n`; });
-    md += '\n';
-  }
-  md += `4. 爆款作品：${f.hitWorksDesc || ''}\n\n`;
-  
-  md += `##### **节目权益表现**\n\n`;
-  md += `${f.rightsOverview || ''}\n\n`;
-  if (t.rightsTable && t.rightsTable.length > 0) {
-    md += '| 权益种类 | 权益类型 | 时长/次数 | 溢出 | 上刊物料 |\n| --- | --- | --- | --- | --- |\n';
-    t.rightsTable.forEach(row => { md += `| ${row[0]||''} | ${row[1]||''} | ${row[2]||''} | ${row[3]||''} | ${row[4]||''} |\n`; });
-    md += '\n';
-  }
-  if (f.secondClientRights) md += `二身份客户权益：${f.secondClientRights}\n\n`;
-  if (t.clientSecondsTable && t.clientSecondsTable.length > 0) {
-    md += `所有客户权益秒数汇总\n\n| 品牌 | 露出总时长（s） |\n| --- | --- |\n`;
-    t.clientSecondsTable.forEach(row => { md += `| ${row[0]||''} | ${row[1]||''} |\n`; });
-    md += '\n';
-  }
-  
-  md += `##### **节目硬广**\n\n`;
-  md += `${f.adTypes || ''}，曝光总计${f.adTotalExposure || ''}，实时达成率${f.adAchievementRate || ''}，整体完成进度${f.adOverallProgress || ''}。\n\n`;
-  if (t.adsTable && t.adsTable.length > 0) {
-    md += '| 资源 | 端 | 曝光PV | 占比 | 点击率 | 备注 |\n| --- | --- | --- | --- | --- | --- |\n';
-    t.adsTable.forEach(row => { md += `| ${row[0]||''} | ${row[1]||''} | ${row[2]||''} | ${row[3]||''} | ${row[4]||''} | ${row[5]||''} |\n`; });
-    md += '\n';
-  }
-  
-  md += `##### **品牌传播**\n\n`;
-  md += `1. **商务传播**\n\n**【微博平台】**${f.weiboSpread || ''}\n\n**【小红书平台】**${f.xiaohongshuSpread || ''}\n\n**【视频号平台】**${f.videoChannelSpread || ''}\n\n**【腾讯视频】**${f.tencentComments || ''}\n\n`;
-  md += `2. **内部宣推：**${f.internalPromotion || ''}\n\n`;
-  
-  md += `##### **站内承接**\n\n`;
-  md += `${f.searchKeyword ? '主搜词"' + f.searchKeyword + '"' : ''}站内搜索QV总数${f.searchQVTotal || ''}，峰值日${f.searchQVPeak || ''}；搜索UV总数${f.searchUVTotal || ''}。\n\n`;
-  if (t.siteTable && t.siteTable.length > 0) {
-    md += '| 日期 | 搜索QV | 搜索UV | QV_CTR | UV_CTR | 意向UV | 意向率 | 支付订单量 | 支付UV | 搜索GTV | 搜索实付GTV |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n';
-    t.siteTable.forEach(row => { md += `| ${row[0]||''} | ${row[1]||''} | ${row[2]||''} | ${row[3]||''} | ${row[4]||''} | ${row[5]||''} | ${row[6]||''} | ${row[7]||''} | ${row[8]||''} | ${row[9]||''} | ${row[10]||''} |\n`; });
-    md += '\n';
-  }
-  
-  // 下载Markdown文件
-  const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `周报-${f.projectName || '综艺项目'}${f.episode || ''}.md`;
-  a.click();
-  URL.revokeObjectURL(url);
-  
-  // 复制到剪贴板
-  navigator.clipboard.writeText(md).then(() => {
-    showToast('Markdown已生成并复制到剪贴板，可用oa-skills citadel createDocument --file xxx.md创建学城文档');
-  }).catch(() => {
-    showToast('Markdown已生成并下载，请复制内容后使用oa-skills citadel创建文档');
+  text += `\n【文件附件】\n`;
+  const fileBase64 = data.fileBase64 || {};
+  Object.keys(fileBase64).forEach(field => {
+    fileBase64[field].forEach(file => {
+      text += `- ${file.name} (${file.type})\n`;
+    });
   });
+  
+  text += `\n【操作说明】\n`;
+  text += `请把下载的JSON文件直接发送给我，我会：\n`;
+  text += `1. 解析所有数据\n`;
+  text += `2. 创建学城文档\n`;
+  text += `3. 上传所有图片/视频附件\n`;
+  text += `4. 返回学城文档链接\n`;
+  
+  return text;
 }
 
 function clearAllData() {
