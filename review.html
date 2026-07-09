@@ -206,6 +206,38 @@
   </div>
 
   <div id="previewArea" style="display:none;">
+    <!-- 管理员编辑基本信息 -->
+    <div class="section" style="border: 2px solid #667eea;">
+      <div class="section-title">基本信息（管理员编辑）<span class="badge" style="background:#667eea;color:white;">仅管理员</span></div>
+      <div style="margin-bottom:16px;">
+        <div style="margin-bottom:12px;">
+          <label style="display:block;font-weight:600;margin-bottom:4px;font-size:14px;">项目名称 *</label>
+          <input type="text" id="editProjectName" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:14px;" placeholder="请输入项目名称">
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="display:block;font-weight:600;margin-bottom:4px;font-size:14px;">期数 *</label>
+          <input type="text" id="editEpisode" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:14px;" placeholder="请输入期数，如：第1期">
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="display:block;font-weight:600;margin-bottom:4px;font-size:14px;">播出平台 *</label>
+          <input type="text" id="editPlatform" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:14px;" placeholder="如：腾讯视频、爱奇艺">
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="display:block;font-weight:600;margin-bottom:4px;font-size:14px;">播出日期 *</label>
+          <input type="date" id="editAirDate" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:14px;">
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="display:block;font-weight:600;margin-bottom:4px;font-size:14px;">项目背景</label>
+          <textarea id="editProjectBackground" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:14px;min-height:80px;resize:vertical;" placeholder="简要描述节目类型、嘉宾阵容、播出周期及合作目标"></textarea>
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="display:block;font-weight:600;margin-bottom:4px;font-size:14px;">核心结论（摘要）</label>
+          <textarea id="editCoreConclusion" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:14px;min-height:80px;resize:vertical;" placeholder="用3-5条概括本期核心数据结论"></textarea>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="updateBasicInfo()" style="width:100%;">💾 保存基本信息并同步到表单</button>
+      </div>
+    </div>
+
     <div class="section">
       <div class="section-title">基本信息 <span class="badge badge-success" id="basicBadge"></span></div>
       <div id="basicPreview"></div>
@@ -399,6 +431,39 @@ function renderPreview(data) {
     renderFieldRow('部门/合作方', f.reporterDept) +
     renderFieldRow('联系方式', f.reporterContact) +
     renderFieldRow('备注', f.remarks);
+  
+  // 填充管理员编辑表单
+  document.getElementById('editProjectName').value = f.projectName || '';
+  document.getElementById('editEpisode').value = f.episode || '';
+  document.getElementById('editPlatform').value = f.platform || '';
+  document.getElementById('editAirDate').value = f.airDate || '';
+  document.getElementById('editProjectBackground').value = f.projectBackground || '';
+  document.getElementById('editCoreConclusion').value = f.coreConclusion || '';
+}
+
+function updateBasicInfo() {
+  if (!currentData) {
+    showToast('请先上传JSON文件');
+    return;
+  }
+  
+  // 更新currentData中的基本信息
+  if (!currentData.fields) currentData.fields = {};
+  currentData.fields.projectName = document.getElementById('editProjectName').value;
+  currentData.fields.episode = document.getElementById('editEpisode').value;
+  currentData.fields.platform = document.getElementById('editPlatform').value;
+  currentData.fields.airDate = document.getElementById('editAirDate').value;
+  currentData.fields.projectBackground = document.getElementById('editProjectBackground').value;
+  currentData.fields.coreConclusion = document.getElementById('editCoreConclusion').value;
+  
+  // 重新渲染预览
+  renderPreview(currentData);
+  
+  // 同步到外发表单的LocalStorage
+  const STORAGE_KEY = 'weeklyReportData';
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(currentData));
+  
+  showToast('基本信息已更新并同步到表单！');
 }
 
 function importToForm() {

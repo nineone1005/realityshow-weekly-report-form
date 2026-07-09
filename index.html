@@ -426,23 +426,8 @@
   <!-- 模式切换栏 -->
   <div class="mode-bar" id="modeBar">
     <div class="mode-info">
-      当前身份：<strong id="currentRole">普通填写者</strong>
-      <span id="roleHint" style="color:#888;margin-left:8px;">只能填写自己负责的部分</span>
-    </div>
-    <div class="mode-actions">
-      <button class="mode-btn" id="btnNormal" onclick="setRole('normal')">普通填写者</button>
-      <button class="mode-btn" id="btnAdmin" onclick="setRole('admin')">管理员</button>
-    </div>
-  </div>
-
-  <!-- 管理员面板 -->
-  <div class="admin-panel hidden" id="adminPanel">
-    <div class="admin-panel-title">管理员操作</div>
-    <div class="admin-actions">
-      <button class="admin-btn admin-btn-primary" onclick="exportJson()">📤 导出JSON数据</button>
-      <button class="admin-btn admin-btn-primary" onclick="exportPdf()">📄 导出PDF</button>
-      <button class="admin-btn admin-btn-primary" onclick="createKmDoc()">🔗 生成学城文档</button>
-      <button class="admin-btn admin-btn-danger" onclick="clearAllData()">🗑️ 清空本周数据</button>
+      <strong>普通填写者</strong>
+      <span style="color:#888;margin-left:8px;">请填写您负责的部分，完成后导出JSON文件发送给管理员</span>
     </div>
   </div>
 
@@ -1001,28 +986,14 @@
 
 <script>
 // ===================== 权限与状态管理 =====================
-let currentRole = 'normal'; // 'normal' | 'admin'
+let currentRole = 'normal'; // 外发表单固定为普通填写者模式
 const STORAGE_KEY = 'weeklyReportData';
-const ADMIN_KEY = 'weeklyReportAdmin'; // 标记是否已设置管理员
 
-// ===================== 角色切换 =====================
+// ===================== 角色初始化 =====================
 function setRole(role) {
-  currentRole = role;
-  document.getElementById('currentRole').textContent = role === 'admin' ? '管理员' : '普通填写者';
-  document.getElementById('roleHint').textContent = role === 'admin' ? '可编辑所有内容，拥有导出和清空权限' : '只能填写自己负责的部分，可保存到页面内接力填写';
-  
-  document.getElementById('btnNormal').classList.toggle('active', role === 'normal');
-  document.getElementById('btnAdmin').classList.toggle('active', role === 'admin');
-  
-  // 显示/隐藏管理员面板
-  document.getElementById('adminPanel').classList.toggle('hidden', role !== 'admin');
-  
-  // 显示/隐藏普通用户操作按钮
-  document.getElementById('normalActions').classList.toggle('hidden', role === 'admin');
-  
+  currentRole = 'normal';
   applyRolePermissions();
   updateProgress();
-  showToast(role === 'admin' ? '已切换为管理员模式' : '已切换为普通填写者模式');
 }
 
 function applyRolePermissions() {
@@ -1271,10 +1242,6 @@ function loadFromStorage() {
 
 // ===================== 管理员功能 =====================
 function exportJson() {
-  if (currentRole !== 'admin') {
-    showToast('只有管理员可以导出数据');
-    return;
-  }
   const data = collectFormData();
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -1287,10 +1254,6 @@ function exportJson() {
 }
 
 function exportPdf() {
-  if (currentRole !== 'admin') {
-    showToast('只有管理员可以导出PDF');
-    return;
-  }
   // 使用浏览器打印功能生成PDF
   const data = collectFormData();
   const printWindow = window.open('', '_blank');
@@ -1416,10 +1379,6 @@ function generatePrintHtml(data) {
 }
 
 function createKmDoc() {
-  if (currentRole !== 'admin') {
-    showToast('只有管理员可以生成学城文档');
-    return;
-  }
   const data = collectFormData();
   const f = data.fields || {};
   const t = data.tables || {};
@@ -1522,11 +1481,7 @@ function createKmDoc() {
 }
 
 function clearAllData() {
-  if (currentRole !== 'admin') {
-    showToast('只有管理员可以清空数据');
-    return;
-  }
-  if (!confirm('确定要清空本周所有数据吗？此操作不可恢复，将删除所有已填写的内容。')) return;
+  if (!confirm('确定要清空本周所有数据吗？此操作不可恢复。')) return;
   
   localStorage.removeItem(STORAGE_KEY);
   
