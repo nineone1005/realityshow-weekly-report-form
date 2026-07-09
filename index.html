@@ -425,9 +425,16 @@
 
   <!-- 模式切换栏 -->
   <div class="mode-bar" id="modeBar">
-    <div class="mode-info">
-      <strong>普通填写者</strong>
-      <span style="color:#888;margin-left:8px;">请填写您负责的部分，完成后导出JSON文件发送给管理员</span>
+    <div class="mode-info" id="modeInfo">
+      <strong id="currentRoleText">普通填写者</strong>
+      <span id="roleHint" style="color:#888;margin-left:8px;">请填写您负责的部分，完成后导出JSON文件发送给管理员</span>
+    </div>
+    <div class="mode-actions" id="modeActions">
+      <div id="passwordArea" style="display:flex;align-items:center;gap:8px;">
+        <input type="password" id="adminPassword" placeholder="输入管理员密码" style="padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;width:140px;">
+        <button type="button" class="mode-btn" onclick="checkPassword()">切换管理员</button>
+      </div>
+      <button type="button" class="mode-btn" id="btnBackToNormal" onclick="setRole('normal')" style="display:none;">返回普通模式</button>
     </div>
   </div>
 
@@ -440,6 +447,19 @@
       <div class="progress-bar-fill" id="progressBar"></div>
     </div>
     <div class="progress-hint" id="progressHint">请完善以下信息，进度达到 90% 时将通知审核人</div>
+  </div>
+
+  <!-- 管理员面板（仅管理员可见） -->
+  <div class="admin-panel hidden" id="adminPanel">
+    <div class="admin-panel-title">管理员操作</div>
+    <div class="admin-actions">
+      <button class="admin-btn admin-btn-primary" onclick="exportJson()">📤 导出JSON数据</button>
+      <button class="admin-btn admin-btn-primary" onclick="exportPdf()">📄 导出PDF</button>
+      <button class="admin-btn admin-btn-primary" onclick="createKmDoc()">🔗 生成学城文档</button>
+      <button class="admin-btn admin-btn-primary" onclick="importJsonFile()">📥 导入JSON文件</button>
+      <button class="admin-btn admin-btn-danger" onclick="clearAllData()">🗑️ 清空本周数据</button>
+    </div>
+    <input type="file" id="importFileInput" accept=".json" style="display:none;" onchange="handleImportJson(event)">
   </div>
 
   <form id="weeklyForm">
@@ -986,12 +1006,37 @@
 
 <script>
 // ===================== 权限与状态管理 =====================
-let currentRole = 'normal'; // 外发表单固定为普通填写者模式
+let currentRole = 'normal';
 const STORAGE_KEY = 'weeklyReportData';
+const ADMIN_PASSWORD = '271199'; // 管理员密码
 
-// ===================== 角色初始化 =====================
+// ===================== 密码验证 =====================
+function checkPassword() {
+  const input = document.getElementById('adminPassword').value;
+  if (input === ADMIN_PASSWORD) {
+    setRole('admin');
+    document.getElementById('adminPassword').value = '';
+    showToast('管理员验证成功，已切换至管理员模式');
+  } else {
+    showToast('密码错误，请重试');
+    document.getElementById('adminPassword').value = '';
+  }
+}
+
+// ===================== 角色切换 =====================
 function setRole(role) {
-  currentRole = 'normal';
+  currentRole = role;
+  
+  // 更新界面显示
+  document.getElementById('currentRoleText').textContent = role === 'admin' ? '管理员' : '普通填写者';
+  document.getElementById('roleHint').textContent = role === 'admin' 
+    ? '可编辑所有内容，拥有导出和清空权限' 
+    : '请填写您负责的部分，完成后导出JSON文件发送给管理员';
+  
+  // 显示/隐藏密码区域和返回按钮
+  document.getElementById('passwordArea').style.display = role === 'admin' ? 'none' : 'flex';
+  document.getElementById('btnBackToNormal').style.display = role === 'admin' ? 'inline-block' : 'none';
+  
   applyRolePermissions();
   updateProgress();
 }
@@ -999,6 +1044,8 @@ function setRole(role) {
 function applyRolePermissions() {
   const adminOnlySections = document.querySelectorAll('[data-admin-only="true"]');
   const adminFields = document.querySelectorAll('[data-admin]');
+  const adminPanel = document.getElementById('adminPanel');
+  const normalActions = document.getElementById('normalActions');
   
   if (currentRole === 'admin') {
     // 管理员：解锁所有
@@ -1009,6 +1056,10 @@ function applyRolePermissions() {
     });
     adminFields.forEach(f => f.disabled = false);
     document.querySelectorAll('.add-row-btn').forEach(btn => btn.disabled = false);
+    
+    // 显示管理员面板，隐藏普通用户操作按钮
+    if (adminPanel) adminPanel.classList.remove('hidden');
+    if (normalActions) normalActions.classList.add('hidden');
   } else {
     // 普通用户：锁定管理员专属部分
     adminOnlySections.forEach(sec => {
@@ -1017,6 +1068,10 @@ function applyRolePermissions() {
       if (notice) notice.classList.remove('hidden');
     });
     adminFields.forEach(f => f.disabled = true);
+    
+    // 隐藏管理员面板，显示普通用户操作按钮
+    if (adminPanel) adminPanel.classList.add('hidden');
+    if (normalActions) normalActions.classList.remove('hidden');
   }
 }
 
@@ -1514,6 +1569,44 @@ function clearAllData() {
   
   updateProgress();
   showToast('本周数据已清空，可以开始新一轮收集');
+}
+
+// ===================== 导入JSON文件（管理员功能） =====================
+function importJsonFile() {
+  document.getElementById('importFileInput').click();
+}
+
+function handleImportJson(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      
+      // 保存到LocalStorage
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      
+      // 填充表单
+      populateFormData(data);
+      
+      showToast('JSON文件导入成功！数据已加载到表单');
+      
+      // 如果当前是管理员模式，解锁所有字段
+      if (currentRole === 'admin') {
+        applyRolePermissions();
+      }
+      
+      updateProgress();
+    } catch (err) {
+      alert('文件解析失败，请确保上传的是有效的JSON文件');
+    }
+  };
+  reader.readAsText(file);
+  
+  // 清空input，允许重复上传同一文件
+  event.target.value = '';
 }
 
 // ===================== 初始化 =====================
