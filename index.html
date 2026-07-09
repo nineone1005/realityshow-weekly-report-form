@@ -507,11 +507,6 @@
         <div class="field-desc">简要描述节目类型、嘉宾阵容、播出周期及合作目标</div>
         <textarea name="projectBackground" rows="3" placeholder="例如：喜剧竞演真人秀，固定嘉宾马东、胡先煦..." data-admin></textarea>
       </div>
-      <div class="field-group">
-        <label class="field-label">核心结论（摘要）</label>
-        <div class="field-desc">用 3-5 条概括本期核心数据结论，将展示在周报最顶部</div>
-        <textarea name="coreConclusion" rows="4" placeholder="1. 首期累积播放量...&#10;2. 全网热搜...&#10;3. 商务植入..." data-admin></textarea>
-      </div>
     </div>
 
     <!-- 2. 播出进度 -->
@@ -520,6 +515,11 @@
         播出进度
         <span class="badge">必填</span>
         <span class="section-status status-empty" id="status-schedule">未填写</span>
+      </div>
+      <div class="field-group">
+        <label class="field-label">本项核心结论</label>
+        <div class="field-desc">一句话概括本期播出进度核心结论</div>
+        <textarea name="scheduleConclusion" rows="2" placeholder="例如：首期已顺利播出，播出状态正常，核心权益全部落实到位..."></textarea>
       </div>
       <div class="field-group">
         <label class="field-label">播出状态<span class="required">*</span></label>
@@ -555,6 +555,11 @@
         节目播出数据
         <span class="badge">必填</span>
         <span class="section-status status-empty" id="status-broadcast">未填写</span>
+      </div>
+      <div class="field-group">
+        <label class="field-label">本项核心结论</label>
+        <div class="field-desc">一句话概括本期节目播出数据核心结论</div>
+        <textarea name="broadcastConclusion" rows="2" placeholder="例如：首期累积播放量达1.2亿，站内热度峰值28000，达成率120%，数据表现超出预期..."></textarea>
       </div>
       <div class="row">
         <div class="col">
@@ -622,6 +627,11 @@
       <div class="section-title">
         节目传播
         <span class="section-status status-empty" id="status-spread">未填写</span>
+      </div>
+      <div class="field-group">
+        <label class="field-label">本项核心结论</label>
+        <div class="field-desc">一句话概括本期节目传播核心结论</div>
+        <textarea name="spreadConclusion" rows="2" placeholder="例如：首期全网热搜137个，短视频话题播放量超5亿，品牌传播声量显著提升..."></textarea>
       </div>
 
       <div class="collapsible open">
@@ -746,6 +756,11 @@
         <span class="section-status status-empty" id="status-rights">未填写</span>
       </div>
       <div class="field-group">
+        <label class="field-label">本项核心结论</label>
+        <div class="field-desc">一句话概括本期节目权益表现核心结论</div>
+        <textarea name="rightsConclusion" rows="2" placeholder="例如：本期权益全部上刊，品牌露出总时长5454秒，无权益遗漏，执行率100%..."></textarea>
+      </div>
+      <div class="field-group">
         <label class="field-label">权益总览</label>
         <textarea name="rightsOverview" rows="2" placeholder="例如：首期上线花式口播*1、短植入*1、创意中插*1，合计品牌展示5454秒..."></textarea>
       </div>
@@ -794,6 +809,11 @@
       <div class="section-title">
         节目硬广
         <span class="section-status status-empty" id="status-ads">未填写</span>
+      </div>
+      <div class="field-group">
+        <label class="field-label">本项核心结论</label>
+        <div class="field-desc">一句话概括本期节目硬广核心结论</div>
+        <textarea name="adsConclusion" rows="2" placeholder="例如：本期硬广曝光总计1153万，达成率223%，整体完成进度8.23%，效果超出预期..."></textarea>
       </div>
       <div class="row">
         <div class="col">
@@ -852,6 +872,11 @@
         品牌传播
         <span class="section-status status-empty" id="status-brand">未填写</span>
       </div>
+      <div class="field-group">
+        <label class="field-label">本项核心结论</label>
+        <div class="field-desc">一句话概括本期品牌传播核心结论</div>
+        <textarea name="brandConclusion" rows="2" placeholder="例如：本期品牌传播覆盖微博、小红书、视频号等多平台，总曝光量超8000万，互动量显著提升..."></textarea>
+      </div>
 
       <div class="collapsible open">
         <div class="collapsible-header" onclick="toggleCollapsible(this)">商务传播</div>
@@ -909,6 +934,11 @@
       <div class="section-title">
         站内承接
         <span class="section-status status-empty" id="status-site">未填写</span>
+      </div>
+      <div class="field-group">
+        <label class="field-label">本项核心结论</label>
+        <div class="field-desc">一句话概括本期站内承接核心结论</div>
+        <textarea name="siteConclusion" rows="2" placeholder="例如：本期站内搜索QV总数2857，峰值日1081，搜索转化效果良好，用户意向率持续提升..."></textarea>
       </div>
       <div class="row">
         <div class="col">
@@ -1442,9 +1472,28 @@ function createKmDoc() {
   
   let md = `# 周报-${f.projectName || '综艺项目'}${f.episode || ''}\n\n`;
   md += `##### **${f.episode || '本期'}节目核心结论：**\n\n`;
-  if (f.coreConclusion) {
-    const lines = f.coreConclusion.split('\n').filter(l => l.trim());
-    lines.forEach((line, idx) => { md += `${idx + 1}. ${line.replace(/^\d+\.\s*/, '')}\n`; });
+  
+  // 自动汇总各部分的"本项核心结论"
+  const conclusions = [
+    { title: '播出进度', content: f.scheduleConclusion },
+    { title: '节目播出数据', content: f.broadcastConclusion },
+    { title: '节目传播', content: f.spreadConclusion },
+    { title: '节目权益表现', content: f.rightsConclusion },
+    { title: '节目硬广', content: f.adsConclusion },
+    { title: '品牌传播', content: f.brandConclusion },
+    { title: '站内承接', content: f.siteConclusion }
+  ];
+  
+  let conclusionIndex = 1;
+  conclusions.forEach(item => {
+    if (item.content && item.content.trim()) {
+      md += `${conclusionIndex}. **${item.title}：**${item.content.trim()}\n`;
+      conclusionIndex++;
+    }
+  });
+  
+  if (conclusionIndex === 1) {
+    md += '（暂无核心结论，请各部分填写人填写"本项核心结论"）\n';
   }
   md += '\n';
   md += `##### 项目背景：\n\n${f.projectBackground || ''}\n\n`;
