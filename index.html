@@ -1012,7 +1012,9 @@ const ADMIN_PASSWORD = '271199'; // 管理员密码
 
 // ===================== 密码验证 =====================
 function checkPassword() {
+  console.log('checkPassword called');
   const input = document.getElementById('adminPassword').value;
+  console.log('Input:', input, 'Expected:', ADMIN_PASSWORD);
   if (input === ADMIN_PASSWORD) {
     setRole('admin');
     document.getElementById('adminPassword').value = '';
