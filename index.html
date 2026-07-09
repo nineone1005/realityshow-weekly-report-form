@@ -392,6 +392,10 @@
     background: #e74c3c;
     color: white;
   }
+  .admin-btn-success {
+    background: #27ae60;
+    color: white;
+  }
   .admin-btn-secondary {
     background: #f0f0f0;
     color: #555;
@@ -452,10 +456,11 @@
   <div class="admin-panel hidden" id="adminPanel">
     <div class="admin-panel-title">管理员操作</div>
     <div class="admin-actions">
+      <button class="admin-btn admin-btn-primary" onclick="importJsonFile()">📥 导入JSON文件</button>
+      <button class="admin-btn admin-btn-success" onclick="mergeAndSaveAll()">🔄 汇总更新（合并所有数据）</button>
       <button class="admin-btn admin-btn-primary" onclick="exportJson()">📤 导出JSON数据</button>
       <button class="admin-btn admin-btn-primary" onclick="exportPdf()">📄 导出PDF</button>
       <button class="admin-btn admin-btn-primary" onclick="createKmDoc()">📦 导出数据包（发给AI生成学城文档）</button>
-      <button class="admin-btn admin-btn-primary" onclick="importJsonFile()">📥 导入JSON文件</button>
       <button class="admin-btn admin-btn-danger" onclick="clearAllData()">🗑️ 清空本周数据</button>
     </div>
     <input type="file" id="importFileInput" accept=".json" style="display:none;" onchange="handleImportJson(event)">
@@ -1298,6 +1303,45 @@ function populateFormData(data) {
       tbody.appendChild(tr);
     });
   });
+  // 恢复文件数据（从fileBase64转换回File对象）
+  if (data.fileBase64) {
+    Object.keys(data.fileBase64).forEach(field => {
+      formData.files[field] = [];
+      data.fileBase64[field].forEach(fileInfo => {
+        try {
+          // 将Base64转换回Blob，再创建File对象
+          const byteString = atob(fileInfo.data);
+          const ab = new ArrayBuffer(byteString.length);
+          const ia = new Uint8Array(ab);
+          for (let i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+          }
+          const blob = new Blob([ab], { type: fileInfo.type });
+          const file = new File([blob], fileInfo.name, { type: fileInfo.type });
+          formData.files[field].push(file);
+          
+          // 显示文件到界面
+          const list = document.getElementById('list-' + field);
+          if (list) {
+            const chip = document.createElement('div');
+            chip.className = 'file-chip';
+            if (file.type.startsWith('image/')) {
+              const url = URL.createObjectURL(file);
+              chip.innerHTML = `<img src="${url}" class="preview-img"><span>${file.name}</span><span class="remove" onclick="removeFile(this, '${field}', '${file.name}')">×</span>`;
+            } else if (file.type.startsWith('video/')) {
+              const url = URL.createObjectURL(file);
+              chip.innerHTML = `<video src="${url}" class="preview-video" controls muted></video><span>${file.name}</span><span class="remove" onclick="removeFile(this, '${field}', '${file.name}')">×</span>`;
+            } else {
+              chip.innerHTML = `<span>📎 ${file.name}</span><span class="remove" onclick="removeFile(this, '${field}', '${file.name}')">×</span>`;
+            }
+            list.appendChild(chip);
+          }
+        } catch (e) {
+          console.error('文件恢复失败:', fileInfo.name, e);
+        }
+      });
+    });
+  }
 }
 
 // ===================== 保存部分数据（接力填写） =====================
@@ -1315,7 +1359,7 @@ function savePartial() {
   updateProgress();
 }
 
-function submitPartial() {
+async function submitPartial() {
   const required = document.querySelectorAll('#weeklyForm [required]');
   let missing = false;
   required.forEach(el => {
@@ -1330,8 +1374,10 @@ function submitPartial() {
     return;
   }
   
-  // 收集数据并导出JSON文件
-  const data = collectFormData();
+  showToast('正在收集数据，请稍候...');
+  
+  // 收集完整数据（包含Base64文件）
+  const data = await collectFullDataWithFiles();
   const f = data.fields || {};
   
   // 生成规范的文件名：周报_项目名称_期数_填写人姓名_日期.json
@@ -1578,6 +1624,55 @@ function generateSummaryText(data) {
   text += `4. 返回学城文档链接\n`;
   
   return text;
+}
+
+// ===================== 管理员汇总更新 =====================
+async function mergeAndSaveAll() {
+  showToast('正在汇总所有数据，请稍候...');
+  
+  // 1. 收集当前页面上的所有表单数据
+  const currentData = await collectFullDataWithFiles();
+  
+  // 2. 读取已保存的数据（可能包含之前导入的JSON数据）
+  const savedData = loadFromStorage() || {};
+  
+  // 3. 合并数据：当前页面数据优先，但保留之前的数据作为补充
+  const merged = {
+    fields: { ...savedData.fields, ...currentData.fields },
+    tables: { ...savedData.tables, ...currentData.tables }
+  };
+  
+  // 4. 合并文件数据：当前页面的文件 + 之前保存的文件
+  const mergedFileBase64 = {};
+  
+  // 先添加之前保存的文件
+  if (savedData.fileBase64) {
+    Object.keys(savedData.fileBase64).forEach(field => {
+      mergedFileBase64[field] = [...savedData.fileBase64[field]];
+    });
+  }
+  
+  // 再添加当前页面的文件（如果有同名文件则覆盖）
+  if (currentData.fileBase64) {
+    Object.keys(currentData.fileBase64).forEach(field => {
+      const currentFiles = currentData.fileBase64[field];
+      if (currentFiles && currentFiles.length > 0) {
+        // 用当前页面的文件替换该字段的所有文件
+        mergedFileBase64[field] = currentFiles;
+      }
+    });
+  }
+  
+  merged.fileBase64 = mergedFileBase64;
+  
+  // 5. 保存到LocalStorage
+  saveToStorage(merged);
+  
+  // 6. 重新加载以更新界面
+  populateFormData(merged);
+  
+  showToast('✅ 汇总更新完成！所有数据已合并保存\n现在可以导出完整数据包了');
+  updateProgress();
 }
 
 function clearAllData() {
