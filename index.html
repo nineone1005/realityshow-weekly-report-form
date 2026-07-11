@@ -821,10 +821,10 @@
       </div>
       <div class="field-group">
         <label class="field-label">权益明细表</label>
-        <div class="field-desc">支持每行上传上刊截图</div>
+        <div class="field-desc">支持每行上传上刊物料（图片或视频）</div>
         <table class="table-inputs" id="rightsTable">
           <thead>
-            <tr><th>权益种类</th><th>权益类型</th><th>时长/次数</th><th>溢出</th><th>上刊截图</th></tr>
+            <tr><th>权益种类</th><th>权益类型</th><th>时长/次数</th><th>溢出</th><th>上刊物料</th></tr>
           </thead>
           <tbody>
             <tr>
@@ -832,11 +832,11 @@
               <td><input placeholder="舞美露出"></td>
               <td><input placeholder="776秒"></td>
               <td><input placeholder=""></td>
-              <td class="cell-upload-col" data-upload-field="rightsScreenshots"></td>
+              <td class="cell-upload-col" data-upload-field="rightsMedia"></td>
             </tr>
           </tbody>
         </table>
-        <button type="button" class="add-row-btn" onclick="addTableRowWithUpload('rightsTable', 'rightsScreenshots')">+ 添加一行</button>
+        <button type="button" class="add-row-btn" onclick="addTableRowWithUpload('rightsTable', 'rightsMedia')">+ 添加一行</button>
       </div>
       <div class="field-group">
         <label class="field-label">二身份客户权益</label>
