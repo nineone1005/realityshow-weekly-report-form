@@ -503,13 +503,15 @@
   <div class="admin-panel hidden" id="adminPanel">
     <div class="admin-panel-title">管理员操作</div>
     <div class="admin-actions">
-      <button class="admin-btn admin-btn-primary" onclick="importJsonFile()">📥 导入JSON文件</button>
-      <button class="admin-btn admin-btn-success" onclick="mergeAndSaveAll()">🔄 汇总更新（合并所有数据）</button>
+      <button class="admin-btn admin-btn-primary" onclick="importJsonFile()">📥 导入JSON文件（合并数据）</button>
+      <button class="admin-btn admin-btn-success" onclick="mergeAndSaveAll()">🔄 汇总更新（合并当前页面数据）</button>
       <button class="admin-btn admin-btn-primary" onclick="exportJson()">📤 导出JSON数据</button>
       <button class="admin-btn admin-btn-primary" onclick="exportPdf()">📄 导出PDF</button>
       <button class="admin-btn admin-btn-primary" onclick="createKmDoc()">📦 导出数据包（发给AI生成学城文档）</button>
-      <button class="admin-btn admin-btn-danger" onclick="clearAllData()">🗑️ 清空本周数据</button>
+      <button class="admin-btn admin-btn-secondary" onclick="clearImportHistory()">🗑️ 清空导入记录</button>
+      <button class="admin-btn admin-btn-danger" onclick="clearAllData()">⚠️ 清空本周所有数据</button>
     </div>
+    <div id="importHistory" style="margin-top:8px;"></div>
     <input type="file" id="importFileInput" accept=".json" style="display:none;" onchange="handleImportJson(event)">
   </div>
 
@@ -1861,6 +1863,7 @@ function clearAllData() {
   if (!confirm('确定要清空本周所有数据吗？此操作不可恢复。')) return;
   
   localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(IMPORT_HISTORY_KEY);
   
   document.querySelectorAll('#weeklyForm input, #weeklyForm textarea, #weeklyForm select').forEach(el => {
     if (el.type === 'file') return;
@@ -1892,6 +1895,9 @@ function clearAllData() {
   // 清空表格文件
   Object.keys(tableFiles).forEach(key => delete tableFiles[key]);
   
+  // 清空导入历史显示
+  renderImportHistory();
+  
   updateProgress();
   showToast('本周数据已清空，可以开始新一轮收集');
 }
@@ -1908,13 +1914,94 @@ function handleImportJson(event) {
   const reader = new FileReader();
   reader.onload = function(e) {
     try {
-      const data = JSON.parse(e.target.result);
+      const newData = JSON.parse(e.target.result);
       
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      // 读取已保存的数据（之前导入的数据）
+      const existingData = loadFromStorage() || {};
       
-      populateFormData(data);
+      // 合并字段数据：新数据覆盖旧数据（但保留旧数据中不为空的字段）
+      const mergedFields = { ...existingData.fields };
+      if (newData.fields) {
+        Object.keys(newData.fields).forEach(key => {
+          const newValue = newData.fields[key];
+          const oldValue = mergedFields[key];
+          // 如果新值不为空，则覆盖；如果新值为空但旧值不为空，保留旧值
+          if (newValue && newValue.trim && newValue.trim() !== '') {
+            mergedFields[key] = newValue;
+          } else if (newValue && typeof newValue === 'string' && newValue.trim() === '') {
+            // 新值为空字符串，保留旧值
+            // 不做任何操作
+          } else if (newValue) {
+            mergedFields[key] = newValue;
+          }
+        });
+      }
       
-      showToast('JSON文件导入成功！数据已加载到表单');
+      // 合并表格数据：新数据的表格行追加到旧数据后面
+      const mergedTables = { ...existingData.tables };
+      if (newData.tables) {
+        Object.keys(newData.tables).forEach(tableId => {
+          const newRows = newData.tables[tableId] || [];
+          const existingRows = mergedTables[tableId] || [];
+          
+          // 过滤掉新数据中全为空的行
+          const validNewRows = newRows.filter(row => row.some(cell => cell && cell.trim && cell.trim() !== ''));
+          
+          if (validNewRows.length > 0) {
+            // 如果旧表格没有数据，直接使用新数据
+            if (!existingRows || existingRows.length === 0) {
+              mergedTables[tableId] = validNewRows;
+            } else {
+              // 合并：追加新行到旧表格后面
+              mergedTables[tableId] = [...existingRows, ...validNewRows];
+            }
+          }
+        });
+      }
+      
+      // 合并表格文件数据
+      const mergedTableFileBase64 = {};
+      
+      // 先复制旧数据中的文件
+      if (existingData.tableFileBase64) {
+        Object.keys(existingData.tableFileBase64).forEach(field => {
+          mergedTableFileBase64[field] = { ...existingData.tableFileBase64[field] };
+        });
+      }
+      
+      // 再合并新数据中的文件
+      if (newData.tableFileBase64) {
+        Object.keys(newData.tableFileBase64).forEach(field => {
+          if (!mergedTableFileBase64[field]) mergedTableFileBase64[field] = {};
+          
+          // 计算已有文件的最大行索引，新文件从后面追加
+          const existingRowKeys = Object.keys(mergedTableFileBase64[field]).map(k => parseInt(k));
+          const maxRowIndex = existingRowKeys.length > 0 ? Math.max(...existingRowKeys) : -1;
+          
+          Object.keys(newData.tableFileBase64[field]).forEach((rowIndex, idx) => {
+            const newRowIndex = maxRowIndex + 1 + idx;
+            mergedTableFileBase64[field][newRowIndex] = newData.tableFileBase64[field][rowIndex];
+          });
+        });
+      }
+      
+      // 构建合并后的完整数据
+      const mergedData = {
+        fields: mergedFields,
+        tables: mergedTables,
+        tableFileBase64: mergedTableFileBase64
+      };
+      
+      // 保存到LocalStorage
+      saveToStorage(mergedData);
+      
+      // 填充表单
+      populateFormData(mergedData);
+      
+      // 记录导入历史
+      addImportHistory(file.name);
+      
+      showToast(`✅ "${file.name}" 导入成功！数据已合并到表单中\n可以继续导入其他人员的JSON文件`);
       
       if (currentRole === 'admin') {
         applyRolePermissions();
@@ -1923,11 +2010,48 @@ function handleImportJson(event) {
       updateProgress();
     } catch (err) {
       alert('文件解析失败，请确保上传的是有效的JSON文件');
+      console.error('导入错误:', err);
     }
   };
   reader.readAsText(file);
   
+  // 清空input，允许重复上传同一文件
   event.target.value = '';
+}
+
+// 导入历史记录
+const IMPORT_HISTORY_KEY = 'weeklyReportImportHistory';
+
+function addImportHistory(fileName) {
+  const history = JSON.parse(localStorage.getItem(IMPORT_HISTORY_KEY) || '[]');
+  const timestamp = new Date().toLocaleString('zh-CN');
+  history.push({ fileName, timestamp });
+  localStorage.setItem(IMPORT_HISTORY_KEY, JSON.stringify(history));
+  renderImportHistory();
+}
+
+function renderImportHistory() {
+  const history = JSON.parse(localStorage.getItem(IMPORT_HISTORY_KEY) || '[]');
+  const container = document.getElementById('importHistory');
+  if (!container) return;
+  
+  if (history.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+  
+  let html = '<div style="margin-top:12px;font-size:13px;"><strong>已导入的文件：</strong></div>';
+  html += '<ul style="margin:8px 0;padding-left:20px;font-size:12px;color:#555;">';
+  history.forEach((item, idx) => {
+    html += `<li>${idx + 1}. ${item.fileName} <span style="color:#999;">(${item.timestamp})</span></li>`;
+  });
+  html += '</ul>';
+  container.innerHTML = html;
+}
+
+function clearImportHistory() {
+  localStorage.removeItem(IMPORT_HISTORY_KEY);
+  renderImportHistory();
 }
 
 // ===================== 初始化 =====================
@@ -1943,6 +2067,9 @@ window.addEventListener('DOMContentLoaded', () => {
     populateFormData(saved);
     showToast('已加载之前保存的数据');
   }
+  
+  // 渲染导入历史记录
+  renderImportHistory();
   
   // 默认普通用户模式
   setRole('normal');
