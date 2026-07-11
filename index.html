@@ -13,7 +13,7 @@
     color: #333;
   }
   .container {
-    max-width: 960px;
+    max-width: 1200px;
     margin: 0 auto;
     padding: 24px 16px 80px;
   }
@@ -57,11 +57,6 @@
     border-radius: 5px;
     transition: width 0.4s ease;
     width: 0%;
-  }
-  .progress-hint {
-    margin-top: 8px;
-    font-size: 12px;
-    color: #888;
   }
   .section {
     background: white;
@@ -143,52 +138,6 @@
     border-color: #e0e0e0;
   }
   textarea { resize: vertical; min-height: 80px; }
-  .file-upload {
-    border: 2px dashed #d9d9d9;
-    border-radius: 8px;
-    padding: 24px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    background: #fafbfc;
-  }
-  .file-upload:hover { border-color: #667eea; background: #f8f9ff; }
-  .file-upload input { display: none; }
-  .file-upload .icon { font-size: 32px; color: #bbb; margin-bottom: 8px; }
-  .file-upload .hint { font-size: 13px; color: #888; }
-  .file-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 12px;
-  }
-  .file-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: #f0f4ff;
-    color: #667eea;
-    padding: 4px 10px;
-    border-radius: 16px;
-    font-size: 13px;
-  }
-  .file-chip .remove {
-    cursor: pointer;
-    font-weight: 700;
-    opacity: 0.7;
-  }
-  .file-chip .remove:hover { opacity: 1; }
-  .preview-img {
-    max-width: 120px; max-height: 120px;
-    border-radius: 8px;
-    object-fit: cover;
-    border: 1px solid #eee;
-  }
-  .preview-video {
-    max-width: 200px;
-    border-radius: 8px;
-    border: 1px solid #eee;
-  }
   .row { display: flex; gap: 16px; flex-wrap: wrap; }
   .col { flex: 1; min-width: 220px; }
   .btn {
@@ -277,34 +226,98 @@
     transition: transform 0.2s;
   }
   .collapsible.open .collapsible-header::after { transform: rotate(90deg); }
+  
+  /* 表格样式 - 支持图片上传 */
   .table-inputs {
     width: 100%;
     border-collapse: collapse;
     margin-top: 8px;
+    font-size: 13px;
   }
   .table-inputs th, .table-inputs td {
     border: 1px solid #e0e0e0;
     padding: 8px;
-    font-size: 13px;
+    text-align: left;
+    vertical-align: top;
   }
   .table-inputs th {
     background: #f5f7fa;
     font-weight: 600;
-    text-align: left;
+    white-space: nowrap;
   }
-  .table-inputs input {
+  .table-inputs td input {
     border: none;
     padding: 6px;
     width: 100%;
     background: transparent;
+    font-size: 13px;
   }
-  .table-inputs input:focus {
+  .table-inputs td input:focus {
     outline: none;
     background: #f0f4ff;
   }
-  .table-inputs input:disabled {
+  .table-inputs td input:disabled {
     background: #f5f5f5;
     color: #999;
+  }
+  
+  /* 表格内图片上传 */
+  .cell-upload {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background 0.2s;
+    min-height: 60px;
+    justify-content: center;
+  }
+  .cell-upload:hover { background: #f0f4ff; }
+  .cell-upload .upload-icon {
+    font-size: 20px;
+    color: #bbb;
+  }
+  .cell-upload .upload-hint {
+    font-size: 11px;
+    color: #999;
+  }
+  .cell-upload input { display: none; }
+  .cell-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: center;
+  }
+  .cell-preview img {
+    max-width: 80px;
+    max-height: 60px;
+    border-radius: 4px;
+    object-fit: cover;
+    border: 1px solid #eee;
+    cursor: pointer;
+  }
+  .cell-preview .preview-video {
+    max-width: 80px;
+    max-height: 60px;
+    border-radius: 4px;
+    border: 1px solid #eee;
+  }
+  .cell-preview .file-tag {
+    font-size: 11px;
+    color: #667eea;
+    background: #f0f4ff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .cell-preview .file-tag .remove-btn {
+    cursor: pointer;
+    font-weight: bold;
+    color: #e74c3c;
   }
   .add-row-btn {
     margin-top: 8px;
@@ -409,6 +422,37 @@
   .status-empty { background: #e8ecf1; color: #888; }
   .status-partial { background: #fff3cd; color: #856404; }
   .status-complete { background: #d4edda; color: #155724; }
+  
+  /* 模态框图片预览 */
+  .modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-content {
+    max-width: 90vw;
+    max-height: 90vh;
+  }
+  .modal-content img {
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: 8px;
+  }
+  .modal-close {
+    position: absolute;
+    top: 20px; right: 20px;
+    color: white;
+    font-size: 30px;
+    cursor: pointer;
+    background: none;
+    border: none;
+  }
+  
   @media (max-width: 640px) {
     .row { flex-direction: column; gap: 0; }
     .col { min-width: 100%; }
@@ -416,6 +460,9 @@
     .actions .btn { width: 100%; }
     .mode-bar { flex-direction: column; align-items: flex-start; }
     .admin-actions { flex-direction: column; }
+    .table-inputs { font-size: 12px; }
+    .table-inputs th, .table-inputs td { padding: 4px; }
+    .cell-preview img { max-width: 50px; max-height: 40px; }
   }
 </style>
 </head>
@@ -599,30 +646,26 @@
       </div>
       <div class="field-group">
         <label class="field-label">三方榜单数据</label>
-        <div class="field-desc">Vlinkage、云合、灯塔、猫眼等</div>
+        <div class="field-desc">Vlinkage、云合、灯塔、猫眼等，支持每行上传上榜截图</div>
         <table class="table-inputs" id="thirdPartyTable">
           <thead>
-            <tr><th>榜单名称</th><th>排名/数据</th><th>持续天数</th></tr>
+            <tr><th>榜单名称</th><th>排名/数据</th><th>持续天数</th><th>上榜截图</th></tr>
           </thead>
           <tbody>
-            <tr><td><input placeholder="Vlinkage"></td><td><input placeholder="TOP1"></td><td><input placeholder="4天"></td></tr>
+            <tr>
+              <td><input placeholder="Vlinkage"></td>
+              <td><input placeholder="TOP1"></td>
+              <td><input placeholder="4天"></td>
+              <td class="cell-upload-col" data-upload-field="thirdPartyScreenshots"></td>
+            </tr>
           </tbody>
         </table>
-        <button type="button" class="add-row-btn" onclick="addTableRow('thirdPartyTable')">+ 添加一行</button>
+        <button type="button" class="add-row-btn" onclick="addTableRowWithUpload('thirdPartyTable', 'thirdPartyScreenshots')">+ 添加一行</button>
       </div>
       <div class="field-group">
         <label class="field-label">社媒指数</label>
         <div class="field-desc">百度指数、微信指数、微博指数等</div>
         <textarea name="socialIndex" rows="2" placeholder="百度指数：15,809；微信指数：3,946,778..."></textarea>
-      </div>
-      <div class="field-group">
-        <label class="field-label">站内表现截图</label>
-        <div class="file-upload" onclick="this.querySelector('input').click()">
-          <input type="file" multiple accept="image/*" data-field="broadcastScreenshots" onchange="handleFiles(this)">
-          <div class="icon">📷</div>
-          <div class="hint">点击上传截图，支持多选</div>
-        </div>
-        <div class="file-list" id="list-broadcastScreenshots"></div>
       </div>
     </div>
 
@@ -657,24 +700,24 @@
           </div>
           <div class="field-group">
             <label class="field-label">各平台热搜分布</label>
+            <div class="field-desc">支持每行上传热搜上榜截图</div>
             <table class="table-inputs" id="hotSearchTable">
               <thead>
-                <tr><th>平台</th><th>热搜总数</th><th>主榜上榜数</th><th>主榜TOP个数</th><th>文娱榜上榜数</th><th>高位热搜内容</th></tr>
+                <tr><th>平台</th><th>热搜总数</th><th>主榜上榜数</th><th>主榜TOP个数</th><th>文娱榜上榜数</th><th>高位热搜内容</th><th>上榜截图</th></tr>
               </thead>
               <tbody>
-                <tr><td><input placeholder="微博"></td><td><input placeholder="62"></td><td><input placeholder="29"></td><td><input placeholder="TOP10*1"></td><td><input placeholder="33"></td><td><input placeholder="#辛芷蕾...#"></td></tr>
+                <tr>
+                  <td><input placeholder="微博"></td>
+                  <td><input placeholder="62"></td>
+                  <td><input placeholder="29"></td>
+                  <td><input placeholder="TOP10*1"></td>
+                  <td><input placeholder="33"></td>
+                  <td><input placeholder="#辛芷蕾..."></td>
+                  <td class="cell-upload-col" data-upload-field="hotSearchScreenshots"></td>
+                </tr>
               </tbody>
             </table>
-            <button type="button" class="add-row-btn" onclick="addTableRow('hotSearchTable')">+ 添加一行</button>
-          </div>
-          <div class="field-group">
-            <label class="field-label">热搜上榜截图</label>
-            <div class="file-upload" onclick="this.querySelector('input').click()">
-              <input type="file" multiple accept="image/*" data-field="hotSearchScreenshots" onchange="handleFiles(this)">
-              <div class="icon">📷</div>
-              <div class="hint">上传各平台热搜截图</div>
-            </div>
-            <div class="file-list" id="list-hotSearchScreenshots"></div>
+            <button type="button" class="add-row-btn" onclick="addTableRowWithUpload('hotSearchTable', 'hotSearchScreenshots')">+ 添加一行</button>
           </div>
         </div>
       </div>
@@ -684,24 +727,24 @@
         <div class="collapsible-body">
           <div class="field-group">
             <label class="field-label">各平台短视频数据</label>
+            <div class="field-desc">支持每行上传数据截图</div>
             <table class="table-inputs" id="shortVideoTable">
               <thead>
-                <tr><th>平台</th><th>话题总播放量</th><th>新增播放量</th><th>发布数量</th><th>爆款数量</th><th>备注</th></tr>
+                <tr><th>平台</th><th>话题总播放量</th><th>新增播放量</th><th>发布数量</th><th>爆款数量</th><th>备注</th><th>数据截图</th></tr>
               </thead>
               <tbody>
-                <tr><td><input placeholder="抖音"></td><td><input placeholder="96.9亿"></td><td><input placeholder="6.9亿"></td><td><input placeholder="89"></td><td><input placeholder="44"></td><td><input placeholder=""></td></tr>
+                <tr>
+                  <td><input placeholder="抖音"></td>
+                  <td><input placeholder="96.9亿"></td>
+                  <td><input placeholder="6.9亿"></td>
+                  <td><input placeholder="89"></td>
+                  <td><input placeholder="44"></td>
+                  <td><input placeholder="官抖点赞10万+"></td>
+                  <td class="cell-upload-col" data-upload-field="shortVideoScreenshots"></td>
+                </tr>
               </tbody>
             </table>
-            <button type="button" class="add-row-btn" onclick="addTableRow('shortVideoTable')">+ 添加一行</button>
-          </div>
-          <div class="field-group">
-            <label class="field-label">短视频截图/视频</label>
-            <div class="file-upload" onclick="this.querySelector('input').click()">
-              <input type="file" multiple accept="image/*,video/*" data-field="shortVideoMedia" onchange="handleFiles(this)">
-              <div class="icon">🎬</div>
-              <div class="hint">上传截图或视频</div>
-            </div>
-            <div class="file-list" id="list-shortVideoMedia"></div>
+            <button type="button" class="add-row-btn" onclick="addTableRowWithUpload('shortVideoTable', 'shortVideoScreenshots')">+ 添加一行</button>
           </div>
         </div>
       </div>
@@ -711,24 +754,22 @@
         <div class="collapsible-body">
           <div class="field-group">
             <label class="field-label">宣推资源列表</label>
+            <div class="field-desc">支持每行上传宣推素材截图</div>
             <table class="table-inputs" id="mediaResourceTable">
               <thead>
-                <tr><th>资源类型</th><th>资源点位</th><th>带品牌权益</th><th>备注</th></tr>
+                <tr><th>资源类型</th><th>资源点位</th><th>带品牌权益</th><th>备注</th><th>素材截图</th></tr>
               </thead>
               <tbody>
-                <tr><td><input placeholder="腾讯资源"></td><td><input placeholder="朋友圈广告"></td><td><input placeholder="联合logo"></td><td><input placeholder=""></td></tr>
+                <tr>
+                  <td><input placeholder="腾讯资源"></td>
+                  <td><input placeholder="朋友圈广告"></td>
+                  <td><input placeholder="联合logo"></td>
+                  <td><input placeholder=""></td>
+                  <td class="cell-upload-col" data-upload-field="mediaScreenshots"></td>
+                </tr>
               </tbody>
             </table>
-            <button type="button" class="add-row-btn" onclick="addTableRow('mediaResourceTable')">+ 添加一行</button>
-          </div>
-          <div class="field-group">
-            <label class="field-label">宣推素材截图</label>
-            <div class="file-upload" onclick="this.querySelector('input').click()">
-              <input type="file" multiple accept="image/*" data-field="mediaScreenshots" onchange="handleFiles(this)">
-              <div class="icon">📷</div>
-              <div class="hint">上传宣推素材截图</div>
-            </div>
-            <div class="file-list" id="list-mediaScreenshots"></div>
+            <button type="button" class="add-row-btn" onclick="addTableRowWithUpload('mediaResourceTable', 'mediaScreenshots')">+ 添加一行</button>
           </div>
         </div>
       </div>
@@ -742,12 +783,22 @@
           </div>
           <div class="field-group">
             <label class="field-label">爆款作品截图/视频</label>
-            <div class="file-upload" onclick="this.querySelector('input').click()">
-              <input type="file" multiple accept="image/*,video/*" data-field="hitWorksMedia" onchange="handleFiles(this)">
-              <div class="icon">🎬</div>
-              <div class="hint">上传爆款作品相关素材</div>
-            </div>
-            <div class="file-list" id="list-hitWorksMedia"></div>
+            <div class="field-desc">支持每行上传截图或视频</div>
+            <table class="table-inputs" id="hitWorksTable">
+              <thead>
+                <tr><th>作品名称</th><th>平台</th><th>播放量/互动量</th><th>备注</th><th>截图/视频</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><input placeholder="技能五子棋"></td>
+                  <td><input placeholder="抖音"></td>
+                  <td><input placeholder="2亿+"></td>
+                  <td><input placeholder="全网模仿"></td>
+                  <td class="cell-upload-col" data-upload-field="hitWorksMedia"></td>
+                </tr>
+              </tbody>
+            </table>
+            <button type="button" class="add-row-btn" onclick="addTableRowWithUpload('hitWorksTable', 'hitWorksMedia')">+ 添加一行</button>
           </div>
         </div>
       </div>
@@ -770,15 +821,22 @@
       </div>
       <div class="field-group">
         <label class="field-label">权益明细表</label>
+        <div class="field-desc">支持每行上传上刊截图</div>
         <table class="table-inputs" id="rightsTable">
           <thead>
-            <tr><th>权益种类</th><th>权益类型</th><th>时长/次数</th><th>溢出</th><th>上刊物料</th></tr>
+            <tr><th>权益种类</th><th>权益类型</th><th>时长/次数</th><th>溢出</th><th>上刊截图</th></tr>
           </thead>
           <tbody>
-            <tr><td><input placeholder="品牌露出"></td><td><input placeholder="舞美露出"></td><td><input placeholder="776秒"></td><td><input placeholder=""></td><td><input placeholder=""></td></tr>
+            <tr>
+              <td><input placeholder="品牌露出"></td>
+              <td><input placeholder="舞美露出"></td>
+              <td><input placeholder="776秒"></td>
+              <td><input placeholder=""></td>
+              <td class="cell-upload-col" data-upload-field="rightsScreenshots"></td>
+            </tr>
           </tbody>
         </table>
-        <button type="button" class="add-row-btn" onclick="addTableRow('rightsTable')">+ 添加一行</button>
+        <button type="button" class="add-row-btn" onclick="addTableRowWithUpload('rightsTable', 'rightsScreenshots')">+ 添加一行</button>
       </div>
       <div class="field-group">
         <label class="field-label">二身份客户权益</label>
@@ -796,15 +854,6 @@
           </tbody>
         </table>
         <button type="button" class="add-row-btn" onclick="addTableRow('clientSecondsTable')">+ 添加一行</button>
-      </div>
-      <div class="field-group">
-        <label class="field-label">上刊视频/截图</label>
-        <div class="file-upload" onclick="this.querySelector('input').click()">
-          <input type="file" multiple accept="image/*,video/*" data-field="rightsMedia" onchange="handleFiles(this)">
-          <div class="icon">🎬</div>
-          <div class="hint">上传上刊视频或截图</div>
-        </div>
-        <div class="file-list" id="list-rightsMedia"></div>
       </div>
     </div>
 
@@ -849,24 +898,24 @@
       </div>
       <div class="field-group">
         <label class="field-label">硬广分端数据</label>
+        <div class="field-desc">支持每行上传素材截图</div>
         <table class="table-inputs" id="adsTable">
           <thead>
-            <tr><th>资源</th><th>端</th><th>曝光PV</th><th>占比</th><th>点击率</th><th>备注</th></tr>
+            <tr><th>资源</th><th>端</th><th>曝光PV</th><th>占比</th><th>点击率</th><th>备注</th><th>素材截图</th></tr>
           </thead>
           <tbody>
-            <tr><td><input placeholder="全屏暂停"></td><td><input placeholder="移动端"></td><td><input placeholder="5990745"></td><td><input placeholder="78%"></td><td><input placeholder="2.38%"></td><td><input placeholder=""></td></tr>
+            <tr>
+              <td><input placeholder="全屏暂停"></td>
+              <td><input placeholder="移动端"></td>
+              <td><input placeholder="5990745"></td>
+              <td><input placeholder="78%"></td>
+              <td><input placeholder="2.38%"></td>
+              <td><input placeholder=""></td>
+              <td class="cell-upload-col" data-upload-field="adsScreenshots"></td>
+            </tr>
           </tbody>
         </table>
-        <button type="button" class="add-row-btn" onclick="addTableRow('adsTable')">+ 添加一行</button>
-      </div>
-      <div class="field-group">
-        <label class="field-label">硬广素材截图</label>
-        <div class="file-upload" onclick="this.querySelector('input').click()">
-          <input type="file" multiple accept="image/*" data-field="adsScreenshots" onchange="handleFiles(this)">
-          <div class="icon">📷</div>
-          <div class="hint">上传硬广素材截图</div>
-        </div>
-        <div class="file-list" id="list-adsScreenshots"></div>
+        <button type="button" class="add-row-btn" onclick="addTableRowWithUpload('adsTable', 'adsScreenshots')">+ 添加一行</button>
       </div>
     </div>
 
@@ -902,13 +951,22 @@
             <textarea name="tencentComments" rows="2" placeholder="弹幕预埋效果、用户提及度..."></textarea>
           </div>
           <div class="field-group">
-            <label class="field-label">传播截图</label>
-            <div class="file-upload" onclick="this.querySelector('input').click()">
-              <input type="file" multiple accept="image/*" data-field="brandScreenshots" onchange="handleFiles(this)">
-              <div class="icon">📷</div>
-              <div class="hint">上传各平台传播截图</div>
-            </div>
-            <div class="file-list" id="list-brandScreenshots"></div>
+            <label class="field-label">商务传播截图</label>
+            <div class="field-desc">支持每行上传各平台传播截图</div>
+            <table class="table-inputs" id="brandSpreadTable">
+              <thead>
+                <tr><th>平台</th><th>内容描述</th><th>数据/效果</th><th>传播截图</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><input placeholder="微博"></td>
+                  <td><input placeholder="贴热话题"></td>
+                  <td><input placeholder="曝光1000万+"></td>
+                  <td class="cell-upload-col" data-upload-field="brandSpreadScreenshots"></td>
+                </tr>
+              </tbody>
+            </table>
+            <button type="button" class="add-row-btn" onclick="addTableRowWithUpload('brandSpreadTable', 'brandSpreadScreenshots')">+ 添加一行</button>
           </div>
         </div>
       </div>
@@ -921,13 +979,22 @@
             <textarea name="internalPromotion" rows="3" placeholder="工区海报张贴、平台推文推送..."></textarea>
           </div>
           <div class="field-group">
-            <label class="field-label">素材上刊图</label>
-            <div class="file-upload" onclick="this.querySelector('input').click()">
-              <input type="file" multiple accept="image/*" data-field="internalScreenshots" onchange="handleFiles(this)">
-              <div class="icon">📷</div>
-              <div class="hint">上传工区海报、上刊图等</div>
-            </div>
-            <div class="file-list" id="list-internalScreenshots"></div>
+            <label class="field-label">内部宣推截图</label>
+            <div class="field-desc">支持每行上传工区海报、上刊图等</div>
+            <table class="table-inputs" id="internalPromoTable">
+              <thead>
+                <tr><th>宣推类型</th><th>位置/渠道</th><th>备注</th><th>上刊截图</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><input placeholder="工区海报"></td>
+                  <td><input placeholder="北京恒电大楼"></td>
+                  <td><input placeholder=""></td>
+                  <td class="cell-upload-col" data-upload-field="internalPromoScreenshots"></td>
+                </tr>
+              </tbody>
+            </table>
+            <button type="button" class="add-row-btn" onclick="addTableRowWithUpload('internalPromoTable', 'internalPromoScreenshots')">+ 添加一行</button>
           </div>
         </div>
       </div>
@@ -974,9 +1041,10 @@
       </div>
       <div class="field-group">
         <label class="field-label">站内承接数据表</label>
+        <div class="field-desc">支持每行上传数据截图</div>
         <table class="table-inputs" id="siteTable">
           <thead>
-            <tr><th>日期</th><th>搜索QV</th><th>搜索UV</th><th>QV_CTR</th><th>UV_CTR</th><th>意向UV</th><th>意向率</th><th>支付订单量</th><th>支付UV</th><th>搜索GTV</th><th>搜索实付GTV</th></tr>
+            <tr><th>日期</th><th>搜索QV</th><th>搜索UV</th><th>QV_CTR</th><th>UV_CTR</th><th>意向UV</th><th>意向率</th><th>支付订单量</th><th>支付UV</th><th>搜索GTV</th><th>搜索实付GTV</th><th>数据截图</th></tr>
           </thead>
           <tbody>
             <tr>
@@ -991,10 +1059,11 @@
               <td><input placeholder="7"></td>
               <td><input placeholder="633.39"></td>
               <td><input placeholder="557.39"></td>
+              <td class="cell-upload-col" data-upload-field="siteScreenshots"></td>
             </tr>
           </tbody>
         </table>
-        <button type="button" class="add-row-btn" onclick="addTableRow('siteTable')">+ 添加一行</button>
+        <button type="button" class="add-row-btn" onclick="addTableRowWithUpload('siteTable', 'siteScreenshots')">+ 添加一行</button>
       </div>
     </div>
 
@@ -1036,6 +1105,14 @@
   </form>
 </div>
 
+<!-- 图片预览模态框 -->
+<div class="modal-overlay" id="imageModal" onclick="closeModal()">
+  <button class="modal-close" onclick="closeModal()">&times;</button>
+  <div class="modal-content">
+    <img id="modalImage" src="" alt="预览">
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1044,11 +1121,12 @@ let currentRole = 'normal';
 const STORAGE_KEY = 'weeklyReportData';
 const ADMIN_PASSWORD = '271199'; // 管理员密码
 
+// 表格文件数据存储：{ fieldName: { rowIndex: [File, ...] } }
+const tableFiles = {};
+
 // ===================== 密码验证 =====================
 function checkPassword() {
-  console.log('checkPassword called');
   const input = document.getElementById('adminPassword').value;
-  console.log('Input:', input, 'Expected:', ADMIN_PASSWORD);
   if (input === ADMIN_PASSWORD) {
     setRole('admin');
     document.getElementById('adminPassword').value = '';
@@ -1063,13 +1141,11 @@ function checkPassword() {
 function setRole(role) {
   currentRole = role;
   
-  // 更新界面显示
   document.getElementById('currentRoleText').textContent = role === 'admin' ? '管理员' : '普通填写者';
   document.getElementById('roleHint').textContent = role === 'admin' 
     ? '可编辑所有内容，拥有导出和清空权限' 
     : '请填写您负责的部分，完成后导出JSON文件发送给管理员';
   
-  // 显示/隐藏密码区域和返回按钮
   document.getElementById('passwordArea').style.display = role === 'admin' ? 'none' : 'flex';
   document.getElementById('btnBackToNormal').style.display = role === 'admin' ? 'inline-block' : 'none';
   
@@ -1084,7 +1160,6 @@ function applyRolePermissions() {
   const normalActions = document.getElementById('normalActions');
   
   if (currentRole === 'admin') {
-    // 管理员：解锁所有
     adminOnlySections.forEach(sec => {
       sec.classList.remove('section-locked');
       const notice = sec.querySelector('.lock-notice');
@@ -1092,12 +1167,11 @@ function applyRolePermissions() {
     });
     adminFields.forEach(f => f.disabled = false);
     document.querySelectorAll('.add-row-btn').forEach(btn => btn.disabled = false);
+    document.querySelectorAll('.cell-upload input').forEach(inp => inp.disabled = false);
     
-    // 显示管理员面板，隐藏普通用户操作按钮
     if (adminPanel) adminPanel.classList.remove('hidden');
     if (normalActions) normalActions.classList.add('hidden');
   } else {
-    // 普通用户：锁定管理员专属部分
     adminOnlySections.forEach(sec => {
       sec.classList.add('section-locked');
       const notice = sec.querySelector('.lock-notice');
@@ -1105,7 +1179,6 @@ function applyRolePermissions() {
     });
     adminFields.forEach(f => f.disabled = true);
     
-    // 隐藏管理员面板，显示普通用户操作按钮
     if (adminPanel) adminPanel.classList.add('hidden');
     if (normalActions) normalActions.classList.remove('hidden');
   }
@@ -1122,8 +1195,16 @@ function updateProgress() {
     inputs.forEach(inp => {
       if (inp.value.trim() !== '') hasValue = true;
     });
+    // 检查表格内是否有文件
+    const uploadCells = sec.querySelectorAll('.cell-upload-col');
+    uploadCells.forEach(cell => {
+      const field = cell.dataset.uploadField;
+      const rowIndex = getRowIndex(cell);
+      if (tableFiles[field] && tableFiles[field][rowIndex] && tableFiles[field][rowIndex].length > 0) {
+        hasValue = true;
+      }
+    });
     
-    // 更新每个section的状态标签
     const statusEl = document.getElementById('status-' + sectionKey);
     if (statusEl) {
       if (hasValue) {
@@ -1143,38 +1224,90 @@ function updateProgress() {
   return percent;
 }
 
-// ===================== 文件上传 =====================
-const formData = { files: {} };
+function getRowIndex(cell) {
+  const row = cell.closest('tr');
+  const tbody = row.closest('tbody');
+  return Array.from(tbody.querySelectorAll('tr')).indexOf(row);
+}
 
-function handleFiles(input) {
-  const field = input.dataset.field;
-  const list = document.getElementById('list-' + field);
-  if (!formData.files[field]) formData.files[field] = [];
+// ===================== 表格行内文件上传 =====================
+function initCellUpload(cell) {
+  const field = cell.dataset.uploadField;
+  if (!field) return;
+  
+  cell.innerHTML = `
+    <div class="cell-upload" onclick="this.querySelector('input').click()">
+      <input type="file" multiple accept="image/*,video/*" onchange="handleCellFiles(this, '${field}')">
+      <div class="upload-icon">📷</div>
+      <div class="upload-hint">点击上传</div>
+    </div>
+  `;
+}
+
+function handleCellFiles(input, field) {
+  const cell = input.closest('.cell-upload-col');
+  const rowIndex = getRowIndex(cell);
+  
+  if (!tableFiles[field]) tableFiles[field] = {};
+  if (!tableFiles[field][rowIndex]) tableFiles[field][rowIndex] = [];
+  
   Array.from(input.files).forEach(file => {
-    formData.files[field].push(file);
-    const chip = document.createElement('div');
-    chip.className = 'file-chip';
-    if (file.type.startsWith('image/')) {
-      const url = URL.createObjectURL(file);
-      chip.innerHTML = `<img src="${url}" class="preview-img"><span>${file.name}</span><span class="remove" onclick="removeFile(this, '${field}', '${file.name}')">×</span>`;
-    } else if (file.type.startsWith('video/')) {
-      const url = URL.createObjectURL(file);
-      chip.innerHTML = `<video src="${url}" class="preview-video" controls muted></video><span>${file.name}</span><span class="remove" onclick="removeFile(this, '${field}', '${file.name}')">×</span>`;
-    } else {
-      chip.innerHTML = `<span>📎 ${file.name}</span><span class="remove" onclick="removeFile(this, '${field}', '${file.name}')">×</span>`;
-    }
-    list.appendChild(chip);
+    tableFiles[field][rowIndex].push(file);
   });
+  
+  renderCellUpload(cell, field, rowIndex);
   updateProgress();
 }
 
-function removeFile(el, field, fileName) {
-  const chip = el.closest('.file-chip');
-  chip.remove();
-  if (formData.files[field]) {
-    formData.files[field] = formData.files[field].filter(f => f.name !== fileName);
+function renderCellUpload(cell, field, rowIndex) {
+  const files = (tableFiles[field] && tableFiles[field][rowIndex]) || [];
+  
+  let html = '<div class="cell-preview">';
+  files.forEach((file, idx) => {
+    if (file.type.startsWith('image/')) {
+      const url = URL.createObjectURL(file);
+      html += `<img src="${url}" onclick="showModal('${url}')" title="${file.name}">`;
+    } else if (file.type.startsWith('video/')) {
+      const url = URL.createObjectURL(file);
+      html += `<video src="${url}" class="preview-video" controls muted title="${file.name}"></video>`;
+    } else {
+      html += `<span class="file-tag">📎 ${file.name}<span class="remove-btn" onclick="removeCellFile('${field}', ${rowIndex}, ${idx}, event)">&times;</span></span>`;
+    }
+  });
+  html += '</div>';
+  html += `<div class="cell-upload" onclick="this.querySelector('input').click()" style="min-height:40px;">
+    <input type="file" multiple accept="image/*,video/*" onchange="handleCellFiles(this, '${field}')">
+    <div class="upload-icon" style="font-size:16px;">+</div>
+    <div class="upload-hint" style="font-size:10px;">继续添加</div>
+  </div>`;
+  
+  cell.innerHTML = html;
+}
+
+function removeCellFile(field, rowIndex, fileIndex, event) {
+  event.stopPropagation();
+  if (tableFiles[field] && tableFiles[field][rowIndex]) {
+    tableFiles[field][rowIndex].splice(fileIndex, 1);
+    // 找到对应的cell并重新渲染
+    document.querySelectorAll(`[data-upload-field="${field}"]`).forEach((cell, idx) => {
+      if (idx === rowIndex) {
+        renderCellUpload(cell, field, rowIndex);
+      }
+    });
   }
   updateProgress();
+}
+
+// ===================== 图片预览模态框 =====================
+function showModal(url) {
+  const modal = document.getElementById('imageModal');
+  const img = document.getElementById('modalImage');
+  img.src = url;
+  modal.classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('imageModal').classList.remove('show');
 }
 
 // ===================== 表格行操作 =====================
@@ -1184,14 +1317,47 @@ function addTableRow(tableId) {
   const firstRow = tbody.querySelector('tr');
   const newRow = document.createElement('tr');
   const cells = firstRow.querySelectorAll('td');
-  cells.forEach(() => {
+  cells.forEach(cell => {
     const td = document.createElement('td');
-    const inp = document.createElement('input');
-    inp.placeholder = '';
-    td.appendChild(inp);
+    if (cell.classList.contains('cell-upload-col')) {
+      td.className = 'cell-upload-col';
+      td.dataset.uploadField = cell.dataset.uploadField;
+      initCellUpload(td);
+    } else {
+      const inp = document.createElement('input');
+      inp.placeholder = '';
+      td.appendChild(inp);
+    }
     newRow.appendChild(td);
   });
   tbody.appendChild(newRow);
+}
+
+function addTableRowWithUpload(tableId, field) {
+  const table = document.getElementById(tableId);
+  const tbody = table.querySelector('tbody');
+  const firstRow = tbody.querySelector('tr');
+  const newRow = document.createElement('tr');
+  const cells = firstRow.querySelectorAll('td');
+  cells.forEach(cell => {
+    const td = document.createElement('td');
+    if (cell.classList.contains('cell-upload-col')) {
+      td.className = 'cell-upload-col';
+      td.dataset.uploadField = field;
+      initCellUpload(td);
+    } else {
+      const inp = document.createElement('input');
+      inp.placeholder = '';
+      td.appendChild(inp);
+    }
+    newRow.appendChild(td);
+  });
+  tbody.appendChild(newRow);
+  
+  // 为新行初始化空的文件数组
+  const rowIndex = tbody.querySelectorAll('tr').length - 1;
+  if (!tableFiles[field]) tableFiles[field] = {};
+  tableFiles[field][rowIndex] = [];
 }
 
 // ===================== 折叠面板 =====================
@@ -1221,49 +1387,50 @@ function collectFormData() {
     const rows = [];
     table.querySelectorAll('tbody tr').forEach(tr => {
       const rowData = [];
-      tr.querySelectorAll('input').forEach(inp => rowData.push(inp.value.trim()));
+      tr.querySelectorAll('td').forEach(td => {
+        if (td.classList.contains('cell-upload-col')) {
+          // 上传列不收集文本数据
+          rowData.push('');
+        } else {
+          const inp = td.querySelector('input');
+          rowData.push(inp ? inp.value.trim() : '');
+        }
+      });
       if (rowData.some(v => v !== '')) rows.push(rowData);
     });
     tables[id] = rows;
   });
   
-  // 收集文件数据（转换为Base64）
-  const files = {};
-  Object.keys(formData.files).forEach(field => {
-    files[field] = formData.files[field].map(file => ({
-      name: file.name,
-      type: file.type,
-      size: file.size
-    }));
-  });
-  
-  return { fields, tables, files };
+  return { fields, tables };
 }
 
 // 异步收集完整数据（包含Base64文件内容）
 async function collectFullDataWithFiles() {
   const data = collectFormData();
   
-  // 将文件转换为Base64
-  const fileBase64 = {};
-  for (const field of Object.keys(formData.files)) {
-    fileBase64[field] = [];
-    for (const file of formData.files[field]) {
-      try {
-        const base64 = await fileToBase64(file);
-        fileBase64[field].push({
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          data: base64
-        });
-      } catch (e) {
-        console.error('文件转换失败:', file.name, e);
+  // 收集表格内文件（按行组织）
+  const tableFileBase64 = {};
+  for (const field of Object.keys(tableFiles)) {
+    tableFileBase64[field] = {};
+    for (const rowIndex of Object.keys(tableFiles[field])) {
+      tableFileBase64[field][rowIndex] = [];
+      for (const file of tableFiles[field][rowIndex]) {
+        try {
+          const base64 = await fileToBase64(file);
+          tableFileBase64[field][rowIndex].push({
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            data: base64
+          });
+        } catch (e) {
+          console.error('文件转换失败:', file.name, e);
+        }
       }
     }
   }
   
-  return { ...data, fileBase64 };
+  return { ...data, tableFileBase64 };
 }
 
 function fileToBase64(file) {
@@ -1289,57 +1456,61 @@ function populateFormData(data) {
     const tbody = table.querySelector('tbody');
     const rows = data.tables[tableId];
     if (!rows || rows.length === 0) return;
-    // 清空现有行，保留表头
     tbody.innerHTML = '';
-    rows.forEach(rowData => {
+    rows.forEach((rowData, rowIndex) => {
       const tr = document.createElement('tr');
-      rowData.forEach(cell => {
+      const headerCells = table.querySelectorAll('thead th');
+      rowData.forEach((cell, cellIndex) => {
         const td = document.createElement('td');
-        const inp = document.createElement('input');
-        inp.value = cell;
-        td.appendChild(inp);
+        const th = headerCells[cellIndex];
+        if (th && th.textContent.includes('截图')) {
+          td.className = 'cell-upload-col';
+          const field = th.closest('table').querySelector('.cell-upload-col')?.dataset.uploadField;
+          if (field) {
+            td.dataset.uploadField = field;
+            initCellUpload(td);
+          }
+        } else {
+          const inp = document.createElement('input');
+          inp.value = cell;
+          td.appendChild(inp);
+        }
         tr.appendChild(td);
       });
       tbody.appendChild(tr);
     });
   });
-  // 恢复文件数据（从fileBase64转换回File对象）
-  if (data.fileBase64) {
-    Object.keys(data.fileBase64).forEach(field => {
-      formData.files[field] = [];
-      data.fileBase64[field].forEach(fileInfo => {
-        try {
-          // 将Base64转换回Blob，再创建File对象
-          const byteString = atob(fileInfo.data);
-          const ab = new ArrayBuffer(byteString.length);
-          const ia = new Uint8Array(ab);
-          for (let i = 0; i < byteString.length; i++) {
-            ia[i] = byteString.charCodeAt(i);
-          }
-          const blob = new Blob([ab], { type: fileInfo.type });
-          const file = new File([blob], fileInfo.name, { type: fileInfo.type });
-          formData.files[field].push(file);
-          
-          // 显示文件到界面
-          const list = document.getElementById('list-' + field);
-          if (list) {
-            const chip = document.createElement('div');
-            chip.className = 'file-chip';
-            if (file.type.startsWith('image/')) {
-              const url = URL.createObjectURL(file);
-              chip.innerHTML = `<img src="${url}" class="preview-img"><span>${file.name}</span><span class="remove" onclick="removeFile(this, '${field}', '${file.name}')">×</span>`;
-            } else if (file.type.startsWith('video/')) {
-              const url = URL.createObjectURL(file);
-              chip.innerHTML = `<video src="${url}" class="preview-video" controls muted></video><span>${file.name}</span><span class="remove" onclick="removeFile(this, '${field}', '${file.name}')">×</span>`;
-            } else {
-              chip.innerHTML = `<span>📎 ${file.name}</span><span class="remove" onclick="removeFile(this, '${field}', '${file.name}')">×</span>`;
+  
+  // 恢复表格内文件数据
+  if (data.tableFileBase64) {
+    Object.keys(data.tableFileBase64).forEach(field => {
+      tableFiles[field] = {};
+      Object.keys(data.tableFileBase64[field]).forEach(rowIndex => {
+        tableFiles[field][rowIndex] = [];
+        data.tableFileBase64[field][rowIndex].forEach(fileInfo => {
+          try {
+            const byteString = atob(fileInfo.data);
+            const ab = new ArrayBuffer(byteString.length);
+            const ia = new Uint8Array(ab);
+            for (let i = 0; i < byteString.length; i++) {
+              ia[i] = byteString.charCodeAt(i);
             }
-            list.appendChild(chip);
+            const blob = new Blob([ab], { type: fileInfo.type });
+            const file = new File([blob], fileInfo.name, { type: fileInfo.type });
+            tableFiles[field][rowIndex].push(file);
+          } catch (e) {
+            console.error('表格文件恢复失败:', fileInfo.name, e);
           }
-        } catch (e) {
-          console.error('文件恢复失败:', fileInfo.name, e);
-        }
+        });
       });
+    });
+    // 重新渲染所有上传单元格
+    document.querySelectorAll('.cell-upload-col').forEach(cell => {
+      const field = cell.dataset.uploadField;
+      const rowIndex = getRowIndex(cell);
+      if (tableFiles[field] && tableFiles[field][rowIndex] && tableFiles[field][rowIndex].length > 0) {
+        renderCellUpload(cell, field, rowIndex);
+      }
     });
   }
 }
@@ -1348,13 +1519,26 @@ function populateFormData(data) {
 function savePartial() {
   const data = collectFormData();
   const existing = loadFromStorage() || {};
-  // 合并：新数据覆盖旧数据
   const merged = {
     fields: { ...existing.fields, ...data.fields },
-    tables: { ...existing.tables, ...data.tables },
-    files: [...new Set([...(existing.files || []), ...(data.files || [])])]
+    tables: { ...existing.tables, ...data.tables }
   };
-  saveToStorage(merged);
+  // 合并表格文件数据
+  const mergedTableFiles = {};
+  if (existing.tableFileBase64) {
+    Object.keys(existing.tableFileBase64).forEach(field => {
+      mergedTableFiles[field] = existing.tableFileBase64[field];
+    });
+  }
+  // 当前页面的表格文件
+  Object.keys(tableFiles).forEach(field => {
+    if (!mergedTableFiles[field]) mergedTableFiles[field] = {};
+    Object.keys(tableFiles[field]).forEach(rowIndex => {
+      // 这里只保存引用，实际保存时会通过collectFullDataWithFiles处理
+    });
+  });
+  
+  saveToStorage({ ...merged, tableFileBase64: mergedTableFiles });
   showToast('您填写的部分已保存到页面内，其他人可以接力填写');
   updateProgress();
 }
@@ -1376,18 +1560,15 @@ async function submitPartial() {
   
   showToast('正在收集数据，请稍候...');
   
-  // 收集完整数据（包含Base64文件）
   const data = await collectFullDataWithFiles();
   const f = data.fields || {};
   
-  // 生成规范的文件名：周报_项目名称_期数_填写人姓名_日期.json
   const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
   const projectName = (f.projectName || '未命名').replace(/[\\/:*?"<>|]/g, '_');
   const episode = (f.episode || '').replace(/[\\/:*?"<>|]/g, '_');
   const reporter = (f.reporterName || '匿名').replace(/[\\/:*?"<>|]/g, '_');
   const fileName = `周报_${projectName}_${episode}_${reporter}_${dateStr}.json`;
   
-  // 导出JSON文件
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1424,7 +1605,6 @@ function exportJson() {
 }
 
 function exportPdf() {
-  // 使用浏览器打印功能生成PDF
   const data = collectFormData();
   const printWindow = window.open('', '_blank');
   printWindow.document.write(generatePrintHtml(data));
@@ -1442,7 +1622,25 @@ function generatePrintHtml(data) {
   let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>周报-${f.projectName || '综艺项目'}${f.episode || ''}</title>`;
   html += `<style>body{font-family:Arial,sans-serif;padding:40px;line-height:1.6;color:#333;}h1{color:#667eea;}h2{color:#444;border-bottom:2px solid #667eea;padding-bottom:8px;}table{border-collapse:collapse;width:100%;margin:12px 0;}th,td{border:1px solid #ddd;padding:8px;text-align:left;}th{background:#f5f7fa;}tr:nth-child(even){background:#fafbfc;}.field{margin:8px 0;}</style></head><body>`;
   html += `<h1>周报-${f.projectName || '综艺项目'}${f.episode || ''}</h1>`;
-  html += `<h2>核心结论</h2><p>${(f.coreConclusion || '').replace(/\n/g, '<br>')}</p>`;
+  
+  // 核心结论
+  const conclusions = [
+    { title: '播出进度', content: f.scheduleConclusion },
+    { title: '节目播出数据', content: f.broadcastConclusion },
+    { title: '节目传播', content: f.spreadConclusion },
+    { title: '节目权益表现', content: f.rightsConclusion },
+    { title: '节目硬广', content: f.adsConclusion },
+    { title: '品牌传播', content: f.brandConclusion },
+    { title: '站内承接', content: f.siteConclusion }
+  ];
+  html += `<h2>核心结论</h2><ol>`;
+  conclusions.forEach(item => {
+    if (item.content && item.content.trim()) {
+      html += `<li><strong>${item.title}：</strong>${item.content.trim().replace(/\n/g, '<br>')}</li>`;
+    }
+  });
+  html += `</ol>`;
+  
   html += `<h2>项目背景</h2><p>${(f.projectBackground || '').replace(/\n/g, '<br>')}</p>`;
   
   // 播出进度
@@ -1499,9 +1697,9 @@ function generatePrintHtml(data) {
   html += `<h2>节目权益表现</h2>`;
   html += `<div class="field">${f.rightsOverview || ''}</div>`;
   if (t.rightsTable && t.rightsTable.length > 0) {
-    html += `<table><thead><tr><th>权益种类</th><th>权益类型</th><th>时长/次数</th><th>溢出</th><th>上刊物料</th></tr></thead><tbody>`;
+    html += `<table><thead><tr><th>权益种类</th><th>权益类型</th><th>时长/次数</th><th>溢出</th></tr></thead><tbody>`;
     t.rightsTable.forEach(row => {
-      html += `<tr><td>${row[0]||''}</td><td>${row[1]||''}</td><td>${row[2]||''}</td><td>${row[3]||''}</td><td>${row[4]||''}</td></tr>`;
+      html += `<tr><td>${row[0]||''}</td><td>${row[1]||''}</td><td>${row[2]||''}</td><td>${row[3]||''}</td></tr>`;
     });
     html += `</tbody></table>`;
   }
@@ -1554,13 +1752,11 @@ async function createKmDoc() {
   const data = await collectFullDataWithFiles();
   const f = data.fields || {};
   
-  // 生成文件名
   const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
   const projectName = (f.projectName || '未命名').replace(/[\\/:*?"<>|]/g, '_');
   const episode = (f.episode || '').replace(/[\\/:*?"<>|]/g, '_');
   const fileName = `周报数据包_${projectName}_${episode}_${dateStr}.json`;
   
-  // 导出完整数据包（包含Base64文件）
   const jsonStr = JSON.stringify(data, null, 2);
   const blob = new Blob([jsonStr], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -1570,7 +1766,6 @@ async function createKmDoc() {
   a.click();
   URL.revokeObjectURL(url);
   
-  // 同时生成纯文本摘要到剪贴板
   const summary = generateSummaryText(data);
   navigator.clipboard.writeText(summary).then(() => {
     showToast('✅ 数据包已导出！\n📋 摘要已复制到剪贴板\n\n请把下载的JSON文件发送给我，我来帮你创建学城文档');
@@ -1579,10 +1774,8 @@ async function createKmDoc() {
   });
 }
 
-// 生成摘要文本，方便用户粘贴
 function generateSummaryText(data) {
   const f = data.fields || {};
-  const t = data.tables || {};
   
   let text = `【综艺项目周报数据包】\n`;
   text += `项目名称：${f.projectName || '未填写'}\n`;
@@ -1608,20 +1801,21 @@ function generateSummaryText(data) {
     }
   });
   
-  text += `\n【文件附件】\n`;
-  const fileBase64 = data.fileBase64 || {};
-  Object.keys(fileBase64).forEach(field => {
-    fileBase64[field].forEach(file => {
-      text += `- ${file.name} (${file.type})\n`;
+  text += `\n【表格文件附件】\n`;
+  const tableFileBase64 = data.tableFileBase64 || {};
+  Object.keys(tableFileBase64).forEach(field => {
+    Object.keys(tableFileBase64[field]).forEach(rowIndex => {
+      tableFileBase64[field][rowIndex].forEach(file => {
+        text += `- ${file.name} (${file.type}) [${field} 第${parseInt(rowIndex)+1}行]\n`;
+      });
     });
   });
   
   text += `\n【操作说明】\n`;
   text += `请把下载的JSON文件直接发送给我，我会：\n`;
   text += `1. 解析所有数据\n`;
-  text += `2. 创建学城文档\n`;
-  text += `3. 上传所有图片/视频附件\n`;
-  text += `4. 返回学城文档链接\n`;
+  text += `2. 创建学城文档（图片将嵌入对应表格）\n`;
+  text += `3. 返回学城文档链接\n`;
   
   return text;
 }
@@ -1630,45 +1824,33 @@ function generateSummaryText(data) {
 async function mergeAndSaveAll() {
   showToast('正在汇总所有数据，请稍候...');
   
-  // 1. 收集当前页面上的所有表单数据
   const currentData = await collectFullDataWithFiles();
-  
-  // 2. 读取已保存的数据（可能包含之前导入的JSON数据）
   const savedData = loadFromStorage() || {};
   
-  // 3. 合并数据：当前页面数据优先，但保留之前的数据作为补充
   const merged = {
     fields: { ...savedData.fields, ...currentData.fields },
     tables: { ...savedData.tables, ...currentData.tables }
   };
   
-  // 4. 合并文件数据：当前页面的文件 + 之前保存的文件
-  const mergedFileBase64 = {};
-  
-  // 先添加之前保存的文件
-  if (savedData.fileBase64) {
-    Object.keys(savedData.fileBase64).forEach(field => {
-      mergedFileBase64[field] = [...savedData.fileBase64[field]];
+  // 合并表格文件数据
+  const mergedTableFileBase64 = {};
+  if (savedData.tableFileBase64) {
+    Object.keys(savedData.tableFileBase64).forEach(field => {
+      mergedTableFileBase64[field] = { ...savedData.tableFileBase64[field] };
+    });
+  }
+  if (currentData.tableFileBase64) {
+    Object.keys(currentData.tableFileBase64).forEach(field => {
+      if (!mergedTableFileBase64[field]) mergedTableFileBase64[field] = {};
+      Object.keys(currentData.tableFileBase64[field]).forEach(rowIndex => {
+        mergedTableFileBase64[field][rowIndex] = currentData.tableFileBase64[field][rowIndex];
+      });
     });
   }
   
-  // 再添加当前页面的文件（如果有同名文件则覆盖）
-  if (currentData.fileBase64) {
-    Object.keys(currentData.fileBase64).forEach(field => {
-      const currentFiles = currentData.fileBase64[field];
-      if (currentFiles && currentFiles.length > 0) {
-        // 用当前页面的文件替换该字段的所有文件
-        mergedFileBase64[field] = currentFiles;
-      }
-    });
-  }
+  merged.tableFileBase64 = mergedTableFileBase64;
   
-  merged.fileBase64 = mergedFileBase64;
-  
-  // 5. 保存到LocalStorage
   saveToStorage(merged);
-  
-  // 6. 重新加载以更新界面
   populateFormData(merged);
   
   showToast('✅ 汇总更新完成！所有数据已合并保存\n现在可以导出完整数据包了');
@@ -1680,32 +1862,35 @@ function clearAllData() {
   
   localStorage.removeItem(STORAGE_KEY);
   
-  // 清空所有表单字段
   document.querySelectorAll('#weeklyForm input, #weeklyForm textarea, #weeklyForm select').forEach(el => {
     if (el.type === 'file') return;
     el.value = '';
   });
   
-  // 清空表格（保留一行空行）
   document.querySelectorAll('.table-inputs tbody').forEach(tbody => {
     const firstRow = tbody.querySelector('tr');
     tbody.innerHTML = '';
     if (firstRow) {
       const newRow = document.createElement('tr');
-      firstRow.querySelectorAll('td').forEach(() => {
-        const td = document.createElement('td');
-        const inp = document.createElement('input');
-        inp.placeholder = '';
-        td.appendChild(inp);
-        newRow.appendChild(td);
+      firstRow.querySelectorAll('td').forEach(td => {
+        const newTd = document.createElement('td');
+        if (td.classList.contains('cell-upload-col')) {
+          newTd.className = 'cell-upload-col';
+          newTd.dataset.uploadField = td.dataset.uploadField;
+          initCellUpload(newTd);
+        } else {
+          const inp = document.createElement('input');
+          inp.placeholder = '';
+          newTd.appendChild(inp);
+        }
+        newRow.appendChild(newTd);
       });
       tbody.appendChild(newRow);
     }
   });
   
-  // 清空文件
-  formData.files = {};
-  document.querySelectorAll('.file-list').forEach(list => list.innerHTML = '');
+  // 清空表格文件
+  Object.keys(tableFiles).forEach(key => delete tableFiles[key]);
   
   updateProgress();
   showToast('本周数据已清空，可以开始新一轮收集');
@@ -1725,15 +1910,12 @@ function handleImportJson(event) {
     try {
       const data = JSON.parse(e.target.result);
       
-      // 保存到LocalStorage
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       
-      // 填充表单
       populateFormData(data);
       
       showToast('JSON文件导入成功！数据已加载到表单');
       
-      // 如果当前是管理员模式，解锁所有字段
       if (currentRole === 'admin') {
         applyRolePermissions();
       }
@@ -1745,12 +1927,16 @@ function handleImportJson(event) {
   };
   reader.readAsText(file);
   
-  // 清空input，允许重复上传同一文件
   event.target.value = '';
 }
 
 // ===================== 初始化 =====================
 window.addEventListener('DOMContentLoaded', () => {
+  // 初始化所有表格上传单元格
+  document.querySelectorAll('.cell-upload-col').forEach(cell => {
+    initCellUpload(cell);
+  });
+  
   // 加载已有数据
   const saved = loadFromStorage();
   if (saved) {
