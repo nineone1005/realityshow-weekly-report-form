@@ -1253,9 +1253,20 @@ function handleCellFiles(input, field) {
   if (!tableFiles[field]) tableFiles[field] = {};
   if (!tableFiles[field][rowIndex]) tableFiles[field][rowIndex] = [];
   
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB限制
+  let oversizedFiles = [];
+  
   Array.from(input.files).forEach(file => {
-    tableFiles[field][rowIndex].push(file);
+    if (file.size > MAX_FILE_SIZE) {
+      oversizedFiles.push(file.name);
+    } else {
+      tableFiles[field][rowIndex].push(file);
+    }
   });
+  
+  if (oversizedFiles.length > 0) {
+    showToast(`⚠️ 以下文件超过5MB未上传：${oversizedFiles.join(', ')}。请压缩后重试。`);
+  }
   
   renderCellUpload(cell, field, rowIndex);
   updateProgress();
@@ -1910,6 +1921,14 @@ function importJsonFile() {
 async function handleImportJson(event) {
   const file = event.target.files[0];
   if (!file) return;
+  
+  // 大文件预检查
+  const MAX_IMPORT_SIZE = 50 * 1024 * 1024; // 50MB
+  if (file.size > MAX_IMPORT_SIZE) {
+    alert(`文件过大 (${(file.size / 1024 / 1024).toFixed(1)}MB)\n\n浏览器无法处理超过50MB的JSON文件。\n\n解决方案：\n1. 让填写者重新导出，减少图片/视频数量\n2. 让填写者压缩图片后再上传（建议每张图片不超过2MB）\n3. 视频文件建议控制在5MB以内\n\n当前文件中的大文件通常是视频导致，建议只上传截图而非完整视频。`);
+    event.target.value = '';
+    return;
+  }
   
   showToast(`正在读取文件 "${file.name}" (${(file.size / 1024 / 1024).toFixed(1)}MB)，请稍候...`);
   
