@@ -1756,140 +1756,138 @@ function generatePrintHtml(data) {
   // 辅助函数：处理字段值（支持数组类型）
   function formatFieldValue(value) {
     if (Array.isArray(value)) {
-      return value.join('\n---\n');
+      return value.join('<br><br>');
     }
     return value || '';
   }
   
+  // 辅助函数：生成表格HTML
+  function generateTableHtml(tableData, headers) {
+    if (!tableData || tableData.length === 0) return '';
+    let html = '<table style="width:100%;border-collapse:collapse;margin:10px 0;font-size:13px;">';
+    html += '<thead><tr>';
+    headers.forEach(h => {
+      html += `<th style="border:1px solid #ddd;padding:8px;background:#f5f5f5;text-align:left;font-weight:bold;">${h}</th>`;
+    });
+    html += '</tr></thead><tbody>';
+    tableData.forEach(row => {
+      html += '<tr>';
+      row.forEach(cell => {
+        html += `<td style="border:1px solid #ddd;padding:8px;">${cell || ''}</td>`;
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    return html;
+  }
+  
   let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>周报-${formatFieldValue(f.projectName) || '综艺项目'}${formatFieldValue(f.episode) || ''}</title>`;
-  html += `<style>body{font-family:Arial,sans-serif;padding:40px;line-height:1.6;color:#333;}h1{color:#667eea;}h2{color:#444;border-bottom:2px solid #667eea;padding-bottom:8px;}table{border-collapse:collapse;width:100%;margin:12px 0;}th,td{border:1px solid #ddd;padding:8px;text-align:left;}th{background:#f5f7fa;}tr:nth-child(even){background:#fafbfc;}.field{margin:8px 0;}</style></head><body>`;
+  html += `<style>body{font-family:Arial,sans-serif;padding:40px;line-height:1.6;color:#333;}h1{color:#333;font-size:22px;}h2{color:#333;border-bottom:2px solid #333;padding-bottom:8px;font-size:16px;margin-top:24px;}h3{color:#333;font-size:14px;margin-top:20px;}table{border-collapse:collapse;width:100%;margin:12px 0;font-size:13px;}th,td{border:1px solid #ddd;padding:8px;text-align:left;}th{background:#f5f5f5;font-weight:bold;}tr:nth-child(even){background:#fafbfc;}.field{margin:8px 0;}.note{color:#666;font-size:13px;margin-bottom:20px;}.conclusion-item{margin-bottom:12px;font-size:14px;}</style></head><body>`;
   html += `<h1>周报-${formatFieldValue(f.projectName) || '综艺项目'}${formatFieldValue(f.episode) || ''}</h1>`;
+  html += `<p class="note">说明：以下内容及相关物料由多方共同填写</p>`;
   
   // 核心结论
+  html += `<h2>${formatFieldValue(f.episode)}节目核心结论</h2>`;
   const conclusions = [
-    { title: '播出进度', content: f.scheduleConclusion },
-    { title: '节目播出数据', content: f.broadcastConclusion },
-    { title: '节目传播', content: f.spreadConclusion },
-    { title: '节目权益表现', content: f.rightsConclusion },
-    { title: '节目硬广', content: f.adsConclusion },
-    { title: '品牌传播', content: f.brandConclusion },
-    { title: '站内承接', content: f.siteConclusion }
+    { title: '【节目播出】', content: f.broadcastConclusion || f.scheduleConclusion },
+    { title: '【节目传播】', content: f.spreadConclusion },
+    { title: '【节目植入】', content: f.rightsConclusion },
+    { title: '【节目硬广】', content: f.adsConclusion }
   ];
-  html += `<h2>核心结论</h2><ol>`;
+  let idx = 1;
   conclusions.forEach(item => {
     if (item.content) {
       const content = formatFieldValue(item.content);
       if (content.trim()) {
-        html += `<li><strong>${item.title}：</strong>${content.trim().replace(/\n/g, '<br>')}</li>`;
+        html += `<div class="conclusion-item">${idx}. ${item.title}${content.trim().replace(/\n/g, '<br>')}</div>`;
+        idx++;
       }
     }
   });
-  html += `</ol>`;
   
-  html += `<h2>项目背景</h2><p>${formatFieldValue(f.projectBackground).replace(/\n/g, '<br>')}</p>`;
+  // 项目背景
+  if (f.projectBackground) {
+    html += `<h3>项目背景：</h3>`;
+    html += `<p>${formatFieldValue(f.projectBackground).replace(/\n/g, '<br>')}</p>`;
+  }
   
   // 播出进度
-  html += `<h2>播出进度</h2>`;
   if (t.scheduleTable && t.scheduleTable.length > 0) {
-    html += `<table><thead><tr><th>期数</th><th>播出日期</th><th>播出状态</th><th>核心权益</th></tr></thead><tbody>`;
-    t.scheduleTable.forEach(row => {
-      html += `<tr><td>${row[0]||''}</td><td>${row[1]||''}</td><td>${row[2]||''}</td><td>${row[3]||''}</td></tr>`;
-    });
-    html += `</tbody></table>`;
+    html += `<h3>播出进度：</h3>`;
+    html += generateTableHtml(t.scheduleTable, ['期数', '播出日期', '播出状态', '核心权益']);
   }
   
   // 节目播出数据
-  html += `<h2>节目播出数据</h2>`;
-  html += `<div class="field"><strong>累积播放量：</strong>${formatFieldValue(f.totalPlayCount)}</div>`;
-  html += `<div class="field"><strong>站内热度峰值：</strong>${formatFieldValue(f.heatPeak)}</div>`;
-  html += `<div class="field"><strong>站内榜单表现：</strong>${formatFieldValue(f.platformRankings)}</div>`;
-  if (t.thirdPartyTable && t.thirdPartyTable.length > 0) {
-    html += `<table><thead><tr><th>榜单名称</th><th>排名/数据</th><th>持续天数</th></tr></thead><tbody>`;
-    t.thirdPartyTable.forEach(row => {
-      html += `<tr><td>${row[0]||''}</td><td>${row[1]||''}</td><td>${row[2]||''}</td></tr>`;
-    });
-    html += `</tbody></table>`;
+  html += `<h2>节目播出</h2>`;
+  if (f.broadcastConclusion) {
+    html += `<p>1. ${formatFieldValue(f.broadcastConclusion).replace(/\n/g, '<br>')}</p>`;
   }
-  html += `<div class="field"><strong>社媒指数：</strong>${formatFieldValue(f.socialIndex)}</div>`;
+  if (t.thirdPartyTable && t.thirdPartyTable.length > 0) {
+    html += `<p>2. 三方榜单数据</p>`;
+    html += generateTableHtml(t.thirdPartyTable, ['榜单名称', '排名/数据', '持续天数']);
+  }
+  if (f.socialIndex) {
+    html += `<p>3. 社媒指数：${formatFieldValue(f.socialIndex)}</p>`;
+  }
   
   // 节目传播
   html += `<h2>节目传播</h2>`;
-  html += `<div class="field"><strong>全网热搜总数：</strong>${formatFieldValue(f.hotSearchTotal)}</div>`;
+  if (f.spreadConclusion) {
+    html += `<p>1. ${formatFieldValue(f.spreadConclusion).replace(/\n/g, '<br>')}</p>`;
+  }
   if (t.hotSearchTable && t.hotSearchTable.length > 0) {
-    html += `<table><thead><tr><th>平台</th><th>热搜总数</th><th>主榜上榜数</th><th>主榜TOP个数</th><th>文娱榜上榜数</th><th>高位热搜内容</th></tr></thead><tbody>`;
-    t.hotSearchTable.forEach(row => {
-      html += `<tr><td>${row[0]||''}</td><td>${row[1]||''}</td><td>${row[2]||''}</td><td>${row[3]||''}</td><td>${row[4]||''}</td><td>${row[5]||''}</td></tr>`;
-    });
-    html += `</tbody></table>`;
+    html += `<p>2. 热搜数据</p>`;
+    html += generateTableHtml(t.hotSearchTable, ['平台', '热搜总数', '主榜上榜数', '主榜TOP个数', '文娱榜上榜数', '高位热搜内容']);
   }
   if (t.shortVideoTable && t.shortVideoTable.length > 0) {
-    html += `<table><thead><tr><th>平台</th><th>话题总播放量</th><th>新增播放量</th><th>发布数量</th><th>爆款数量</th><th>备注</th></tr></thead><tbody>`;
-    t.shortVideoTable.forEach(row => {
-      html += `<tr><td>${row[0]||''}</td><td>${row[1]||''}</td><td>${row[2]||''}</td><td>${row[3]||''}</td><td>${row[4]||''}</td><td>${row[5]||''}</td></tr>`;
-    });
-    html += `</tbody></table>`;
+    html += `<p>3. 短视频数据</p>`;
+    html += generateTableHtml(t.shortVideoTable, ['平台', '话题总播放量', '新增播放量', '发布数量', '爆款数量', '备注']);
   }
-  if (t.mediaResourceTable && t.mediaResourceTable.length > 0) {
-    html += `<table><thead><tr><th>资源类型</th><th>资源点位</th><th>带品牌权益</th><th>备注</th></tr></thead><tbody>`;
-    t.mediaResourceTable.forEach(row => {
-      html += `<tr><td>${row[0]||''}</td><td>${row[1]||''}</td><td>${row[2]||''}</td><td>${row[3]||''}</td></tr>`;
-    });
-    html += `</tbody></table>`;
-  }
-  html += `<div class="field"><strong>爆款作品：</strong>${formatFieldValue(f.hitWorksDesc)}</div>`;
   
-  // 权益
+  // 节目权益表现
   html += `<h2>节目权益表现</h2>`;
-  html += `<div class="field">${formatFieldValue(f.rightsOverview)}</div>`;
-  if (t.rightsTable && t.rightsTable.length > 0) {
-    html += `<table><thead><tr><th>权益种类</th><th>权益类型</th><th>时长/次数</th><th>溢出</th></tr></thead><tbody>`;
-    t.rightsTable.forEach(row => {
-      html += `<tr><td>${row[0]||''}</td><td>${row[1]||''}</td><td>${row[2]||''}</td><td>${row[3]||''}</td></tr>`;
-    });
-    html += `</tbody></table>`;
+  if (f.rightsConclusion) {
+    html += `<p>1. ${formatFieldValue(f.rightsConclusion).replace(/\n/g, '<br>')}</p>`;
   }
-  html += `<div class="field"><strong>二身份客户权益：</strong>${formatFieldValue(f.secondClientRights)}</div>`;
+  if (t.rightsTable && t.rightsTable.length > 0) {
+    html += `<p>2. 权益明细</p>`;
+    html += generateTableHtml(t.rightsTable, ['权益种类', '权益类型', '时长/次数', '溢出']);
+  }
   if (t.clientSecondsTable && t.clientSecondsTable.length > 0) {
-    html += `<table><thead><tr><th>品牌</th><th>露出总时长（秒）</th></tr></thead><tbody>`;
-    t.clientSecondsTable.forEach(row => {
-      html += `<tr><td>${row[0]||''}</td><td>${row[1]||''}</td></tr>`;
-    });
-    html += `</tbody></table>`;
+    html += `<p>3. 客户权益秒数汇总</p>`;
+    html += generateTableHtml(t.clientSecondsTable, ['品牌', '露出总时长（s）']);
   }
   
-  // 硬广
+  // 节目硬广
   html += `<h2>节目硬广</h2>`;
-  html += `<div class="field">${formatFieldValue(f.adTypes)}，曝光总计${formatFieldValue(f.adTotalExposure)}，实时达成率${formatFieldValue(f.adAchievementRate)}，整体完成进度${formatFieldValue(f.adOverallProgress)}</div>`;
+  if (f.adsConclusion) {
+    html += `<p>1. ${formatFieldValue(f.adsConclusion).replace(/\n/g, '<br>')}</p>`;
+  }
   if (t.adsTable && t.adsTable.length > 0) {
-    html += `<table><thead><tr><th>资源</th><th>端</th><th>曝光PV</th><th>占比</th><th>点击率</th><th>备注</th></tr></thead><tbody>`;
-    t.adsTable.forEach(row => {
-      html += `<tr><td>${row[0]||''}</td><td>${row[1]||''}</td><td>${row[2]||''}</td><td>${row[3]||''}</td><td>${row[4]||''}</td><td>${row[5]||''}</td></tr>`;
-    });
-    html += `</tbody></table>`;
+    html += `<p>2. 硬广分端数据</p>`;
+    html += generateTableHtml(t.adsTable, ['资源', '端', '曝光PV', '占比', '点击率', '备注']);
   }
   
   // 品牌传播
-  html += `<h2>品牌传播</h2>`;
-  html += `<div class="field"><strong>微博平台：</strong>${formatFieldValue(f.weiboSpread).replace(/\n/g, '<br>')}</div>`;
-  html += `<div class="field"><strong>小红书平台：</strong>${formatFieldValue(f.xiaohongshuSpread).replace(/\n/g, '<br>')}</div>`;
-  html += `<div class="field"><strong>视频号平台：</strong>${formatFieldValue(f.videoChannelSpread).replace(/\n/g, '<br>')}</div>`;
-  html += `<div class="field"><strong>腾讯视频弹幕：</strong>${formatFieldValue(f.tencentComments).replace(/\n/g, '<br>')}</div>`;
-  html += `<div class="field"><strong>内部宣推：</strong>${formatFieldValue(f.internalPromotion).replace(/\n/g, '<br>')}</div>`;
+  if (f.brandConclusion || f.weiboSpread || f.xiaohongshuSpread) {
+    html += `<h2>品牌传播</h2>`;
+    if (f.brandConclusion) html += `<p>${formatFieldValue(f.brandConclusion).replace(/\n/g, '<br>')}</p>`;
+    if (f.weiboSpread) html += `<p><strong>微博平台：</strong>${formatFieldValue(f.weiboSpread).replace(/\n/g, '<br>')}</p>`;
+    if (f.xiaohongshuSpread) html += `<p><strong>小红书平台：</strong>${formatFieldValue(f.xiaohongshuSpread).replace(/\n/g, '<br>')}</p>`;
+    if (f.videoChannelSpread) html += `<p><strong>视频号平台：</strong>${formatFieldValue(f.videoChannelSpread).replace(/\n/g, '<br>')}</p>`;
+  }
   
   // 站内承接
-  html += `<h2>站内承接</h2>`;
-  html += `<div class="field">主搜词"${formatFieldValue(f.searchKeyword)}"，搜索QV总数${formatFieldValue(f.searchQVTotal)}，峰值日${formatFieldValue(f.searchQVPeak)}；搜索UV总数${formatFieldValue(f.searchUVTotal)}</div>`;
-  if (t.siteTable && t.siteTable.length > 0) {
-    html += `<table><thead><tr><th>日期</th><th>搜索QV</th><th>搜索UV</th><th>QV_CTR</th><th>UV_CTR</th><th>意向UV</th><th>意向率</th><th>支付订单量</th><th>支付UV</th><th>搜索GTV</th><th>搜索实付GTV</th></tr></thead><tbody>`;
-    t.siteTable.forEach(row => {
-      html += `<tr><td>${row[0]||''}</td><td>${row[1]||''}</td><td>${row[2]||''}</td><td>${row[3]||''}</td><td>${row[4]||''}</td><td>${row[5]||''}</td><td>${row[6]||''}</td><td>${row[7]||''}</td><td>${row[8]||''}</td><td>${row[9]||''}</td><td>${row[10]||''}</td></tr>`;
-    });
-    html += `</tbody></table>`;
+  if (f.siteConclusion || t.siteTable) {
+    html += `<h2>站内承接</h2>`;
+    if (f.siteConclusion) html += `<p>${formatFieldValue(f.siteConclusion).replace(/\n/g, '<br>')}</p>`;
+    if (t.siteTable && t.siteTable.length > 0) {
+      html += generateTableHtml(t.siteTable, ['日期', '搜索QV', '搜索UV', 'QV_CTR', 'UV_CTR', '意向UV', '意向率', '支付订单量', '支付UV', '搜索GTV', '搜索实付GTV']);
+    }
   }
   
   html += `</body></html>`;
   return html;
-}
 
 async function createKmDoc() {
   showToast('正在收集数据，请稍候...');
@@ -1921,6 +1919,7 @@ async function createKmDoc() {
 
 function generateSummaryText(data) {
   const f = data.fields || {};
+  const t = data.tables || {};
   
   // 辅助函数：处理字段值（支持数组类型）
   function formatFieldValue(value) {
@@ -1930,20 +1929,29 @@ function generateSummaryText(data) {
     return value || '';
   }
   
-  let text = `【综艺项目周报数据包】\n`;
-  text += `项目名称：${formatFieldValue(f.projectName)}\n`;
-  text += `期数：${formatFieldValue(f.episode)}\n`;
-  text += `播出平台：${formatFieldValue(f.platform)}\n`;
-  text += `\n【核心结论摘要】\n`;
+  // 辅助函数：生成表格Markdown
+  function generateTableMarkdown(tableData, headers) {
+    if (!tableData || tableData.length === 0) return '';
+    let md = '| ' + headers.join(' | ') + ' |\n';
+    md += '|' + headers.map(() => ' --- ').join('|') + '|\n';
+    tableData.forEach(row => {
+      md += '| ' + row.map(cell => cell || '').join(' | ') + ' |\n';
+    });
+    return md;
+  }
+  
+  let text = `# 周报-${formatFieldValue(f.projectName)}${formatFieldValue(f.episode)}\n\n`;
+  
+  text += `#### 说明：以下内容及相关物料由多方共同填写\n\n`;
+  
+  // 核心结论
+  text += `##### **${formatFieldValue(f.episode)}节目核心结论**\n\n`;
   
   const conclusions = [
-    { title: '播出进度', content: f.scheduleConclusion },
-    { title: '节目播出数据', content: f.broadcastConclusion },
-    { title: '节目传播', content: f.spreadConclusion },
-    { title: '节目权益表现', content: f.rightsConclusion },
-    { title: '节目硬广', content: f.adsConclusion },
-    { title: '品牌传播', content: f.brandConclusion },
-    { title: '站内承接', content: f.siteConclusion }
+    { title: '【节目播出】', content: f.broadcastConclusion || f.scheduleConclusion },
+    { title: '【节目传播】', content: f.spreadConclusion },
+    { title: '【节目植入】', content: f.rightsConclusion },
+    { title: '【节目硬广】', content: f.adsConclusion }
   ];
   
   let idx = 1;
@@ -1951,27 +1959,121 @@ function generateSummaryText(data) {
     if (item.content) {
       const content = formatFieldValue(item.content);
       if (content.trim()) {
-        text += `${idx}. ${item.title}：${content.trim()}\n`;
+        text += `${idx}. ${item.title}${content.trim()}\n`;
         idx++;
       }
     }
   });
   
-  text += `\n【表格文件附件】\n`;
+  text += '\n';
+  
+  // 项目背景
+  if (f.projectBackground) {
+    text += `##### 项目背景：\n\n${formatFieldValue(f.projectBackground)}\n\n`;
+  }
+  
+  // 播出进度
+  if (t.scheduleTable && t.scheduleTable.length > 0) {
+    text += `##### 播出进度：\n\n`;
+    text += generateTableMarkdown(t.scheduleTable, ['期数', '播出日期', '播出状态', '核心权益']);
+    text += '\n';
+  }
+  
+  // 节目播出数据
+  text += `##### **节目播出：**\n\n`;
+  if (f.broadcastConclusion) {
+    text += `1. ${formatFieldValue(f.broadcastConclusion)}\n\n`;
+  }
+  if (t.thirdPartyTable && t.thirdPartyTable.length > 0) {
+    text += `2. 三方榜单数据\n\n`;
+    text += generateTableMarkdown(t.thirdPartyTable, ['榜单名称', '排名/数据', '持续天数']);
+    text += '\n';
+  }
+  if (f.socialIndex) {
+    text += `3. 社媒指数：${formatFieldValue(f.socialIndex)}\n\n`;
+  }
+  
+  // 节目传播
+  text += `##### **节目传播：**\n\n`;
+  if (f.spreadConclusion) {
+    text += `1. ${formatFieldValue(f.spreadConclusion)}\n\n`;
+  }
+  if (t.hotSearchTable && t.hotSearchTable.length > 0) {
+    text += `2. 热搜数据\n\n`;
+    text += generateTableMarkdown(t.hotSearchTable, ['平台', '热搜总数', '主榜上榜数', '主榜TOP个数', '文娱榜上榜数', '高位热搜内容']);
+    text += '\n';
+  }
+  if (t.shortVideoTable && t.shortVideoTable.length > 0) {
+    text += `3. 短视频数据\n\n`;
+    text += generateTableMarkdown(t.shortVideoTable, ['平台', '话题总播放量', '新增播放量', '发布数量', '爆款数量', '备注']);
+    text += '\n';
+  }
+  
+  // 节目权益表现
+  text += `##### **节目权益表现**\n\n`;
+  if (f.rightsConclusion) {
+    text += `1. ${formatFieldValue(f.rightsConclusion)}\n\n`;
+  }
+  if (t.rightsTable && t.rightsTable.length > 0) {
+    text += `2. 权益明细\n\n`;
+    text += generateTableMarkdown(t.rightsTable, ['权益种类', '权益类型', '时长/次数', '溢出']);
+    text += '\n';
+  }
+  if (t.clientSecondsTable && t.clientSecondsTable.length > 0) {
+    text += `3. 客户权益秒数汇总\n\n`;
+    text += generateTableMarkdown(t.clientSecondsTable, ['品牌', '露出总时长（s）']);
+    text += '\n';
+  }
+  
+  // 节目硬广
+  text += `##### **节目硬广**\n\n`;
+  if (f.adsConclusion) {
+    text += `1. ${formatFieldValue(f.adsConclusion)}\n\n`;
+  }
+  if (t.adsTable && t.adsTable.length > 0) {
+    text += `2. 硬广分端数据\n\n`;
+    text += generateTableMarkdown(t.adsTable, ['资源', '端', '曝光PV', '占比', '点击率', '备注']);
+    text += '\n';
+  }
+  
+  // 品牌传播
+  if (f.brandConclusion || f.weiboSpread || f.xiaohongshuSpread) {
+    text += `##### **品牌传播：**\n\n`;
+    if (f.brandConclusion) text += `${formatFieldValue(f.brandConclusion)}\n\n`;
+    if (f.weiboSpread) text += `**微博平台：**${formatFieldValue(f.weiboSpread)}\n\n`;
+    if (f.xiaohongshuSpread) text += `**小红书平台：**${formatFieldValue(f.xiaohongshuSpread)}\n\n`;
+    if (f.videoChannelSpread) text += `**视频号平台：**${formatFieldValue(f.videoChannelSpread)}\n\n`;
+  }
+  
+  // 站内承接
+  if (f.siteConclusion || t.siteTable) {
+    text += `##### **站内承接：**\n\n`;
+    if (f.siteConclusion) text += `${formatFieldValue(f.siteConclusion)}\n\n`;
+    if (t.siteTable && t.siteTable.length > 0) {
+      text += generateTableMarkdown(t.siteTable, ['日期', '搜索QV', '搜索UV', 'QV_CTR', 'UV_CTR', '意向UV', '意向率', '支付订单量', '支付UV', '搜索GTV', '搜索实付GTV']);
+      text += '\n';
+    }
+  }
+  
+  // 图片附件信息
+  text += `\n---\n\n`;
+  text += `**图片附件：**\n\n`;
   const tableFileBase64 = data.tableFileBase64 || {};
+  let hasImages = false;
   Object.keys(tableFileBase64).forEach(field => {
     Object.keys(tableFileBase64[field]).forEach(rowIndex => {
       tableFileBase64[field][rowIndex].forEach(file => {
-        text += `- ${file.name} (${file.type}) [${field} 第${parseInt(rowIndex)+1}行]\n`;
+        if (file.type.startsWith('image/')) {
+          text += `- ${file.name} [${field} 第${parseInt(rowIndex)+1}行]\n`;
+          hasImages = true;
+        }
       });
     });
   });
+  if (!hasImages) text += '（无图片附件）\n';
   
-  text += `\n【操作说明】\n`;
-  text += `请把下载的JSON文件直接发送给我，我会：\n`;
-  text += `1. 解析所有数据\n`;
-  text += `2. 创建学城文档（图片将嵌入对应表格）\n`;
-  text += `3. 返回学城文档链接\n`;
+  text += `\n**操作说明：**\n`;
+  text += `请把下载的JSON文件直接发送给我，我会创建学城文档并嵌入图片\n`;
   
   return text;
 }
