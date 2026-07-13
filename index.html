@@ -1907,116 +1907,179 @@ function importJsonFile() {
   document.getElementById('importFileInput').click();
 }
 
-function handleImportJson(event) {
+async function handleImportJson(event) {
   const file = event.target.files[0];
   if (!file) return;
   
-  const reader = new FileReader();
-  reader.onload = function(e) {
+  showToast(`正在读取文件 "${file.name}" (${(file.size / 1024 / 1024).toFixed(1)}MB)，请稍候...`);
+  
+  try {
+    // 使用分块读取大文件
+    const text = await readLargeFile(file);
+    
+    showToast('正在解析JSON数据...');
+    
+    let newData;
     try {
-      const newData = JSON.parse(e.target.result);
-      
-      // 读取已保存的数据（之前导入的数据）
-      const existingData = loadFromStorage() || {};
-      
-      // 合并字段数据：新数据覆盖旧数据（但保留旧数据中不为空的字段）
-      const mergedFields = { ...existingData.fields };
-      if (newData.fields) {
-        Object.keys(newData.fields).forEach(key => {
-          const newValue = newData.fields[key];
-          const oldValue = mergedFields[key];
-          // 如果新值不为空，则覆盖；如果新值为空但旧值不为空，保留旧值
-          if (newValue && newValue.trim && newValue.trim() !== '') {
-            mergedFields[key] = newValue;
-          } else if (newValue && typeof newValue === 'string' && newValue.trim() === '') {
-            // 新值为空字符串，保留旧值
-            // 不做任何操作
-          } else if (newValue) {
-            mergedFields[key] = newValue;
-          }
-        });
-      }
-      
-      // 合并表格数据：新数据的表格行追加到旧数据后面
-      const mergedTables = { ...existingData.tables };
-      if (newData.tables) {
-        Object.keys(newData.tables).forEach(tableId => {
-          const newRows = newData.tables[tableId] || [];
-          const existingRows = mergedTables[tableId] || [];
-          
-          // 过滤掉新数据中全为空的行
-          const validNewRows = newRows.filter(row => row.some(cell => cell && cell.trim && cell.trim() !== ''));
-          
-          if (validNewRows.length > 0) {
-            // 如果旧表格没有数据，直接使用新数据
-            if (!existingRows || existingRows.length === 0) {
-              mergedTables[tableId] = validNewRows;
-            } else {
-              // 合并：追加新行到旧表格后面
-              mergedTables[tableId] = [...existingRows, ...validNewRows];
-            }
-          }
-        });
-      }
-      
-      // 合并表格文件数据
-      const mergedTableFileBase64 = {};
-      
-      // 先复制旧数据中的文件
-      if (existingData.tableFileBase64) {
-        Object.keys(existingData.tableFileBase64).forEach(field => {
-          mergedTableFileBase64[field] = { ...existingData.tableFileBase64[field] };
-        });
-      }
-      
-      // 再合并新数据中的文件
-      if (newData.tableFileBase64) {
-        Object.keys(newData.tableFileBase64).forEach(field => {
-          if (!mergedTableFileBase64[field]) mergedTableFileBase64[field] = {};
-          
-          // 计算已有文件的最大行索引，新文件从后面追加
-          const existingRowKeys = Object.keys(mergedTableFileBase64[field]).map(k => parseInt(k));
-          const maxRowIndex = existingRowKeys.length > 0 ? Math.max(...existingRowKeys) : -1;
-          
-          Object.keys(newData.tableFileBase64[field]).forEach((rowIndex, idx) => {
-            const newRowIndex = maxRowIndex + 1 + idx;
-            mergedTableFileBase64[field][newRowIndex] = newData.tableFileBase64[field][rowIndex];
-          });
-        });
-      }
-      
-      // 构建合并后的完整数据
-      const mergedData = {
-        fields: mergedFields,
-        tables: mergedTables,
-        tableFileBase64: mergedTableFileBase64
-      };
-      
-      // 保存到LocalStorage
-      saveToStorage(mergedData);
-      
-      // 填充表单
-      populateFormData(mergedData);
-      
-      // 记录导入历史
-      addImportHistory(file.name);
-      
-      showToast(`✅ "${file.name}" 导入成功！数据已合并到表单中\n可以继续导入其他人员的JSON文件`);
-      
-      if (currentRole === 'admin') {
-        applyRolePermissions();
-      }
-      
-      updateProgress();
-    } catch (err) {
-      alert('文件解析失败，请确保上传的是有效的JSON文件');
-      console.error('导入错误:', err);
+      newData = JSON.parse(text);
+    } catch (parseErr) {
+      console.error('JSON解析错误:', parseErr);
+      alert('文件解析失败：JSON格式不正确。\n可能原因：文件过大导致读取不完整，或文件已损坏。\n\n建议：让填写者重新导出JSON文件，或减少图片数量后重试。');
+      event.target.value = '';
+      return;
     }
-  };
-  reader.readAsText(file);
+    
+    // 验证数据结构
+    if (!newData.fields && !newData.tables) {
+      alert('文件格式不正确：缺少必要的字段数据或表格数据。\n请确保上传的是通过本表单导出的JSON文件。');
+      event.target.value = '';
+      return;
+    }
+    
+    // 读取已保存的数据（之前导入的数据）
+    const existingData = loadFromStorage() || {};
+    
+    // 合并字段数据：新数据覆盖旧数据（但保留旧数据中不为空的字段）
+    const mergedFields = { ...existingData.fields };
+    if (newData.fields) {
+      Object.keys(newData.fields).forEach(key => {
+        const newValue = newData.fields[key];
+        // 如果新值不为空，则覆盖；如果新值为空但旧值不为空，保留旧值
+        if (newValue !== undefined && newValue !== null) {
+          if (typeof newValue === 'string') {
+            if (newValue.trim() !== '') {
+              mergedFields[key] = newValue;
+            }
+            // 空字符串保留旧值
+          } else {
+            mergedFields[key] = newValue;
+          }
+        }
+      });
+    }
+    
+    // 合并表格数据：新数据的表格行追加到旧数据后面
+    const mergedTables = {};
+    // 先复制旧数据的所有表格
+    if (existingData.tables) {
+      Object.keys(existingData.tables).forEach(tableId => {
+        mergedTables[tableId] = [...existingData.tables[tableId]];
+      });
+    }
+    // 再合并新数据
+    if (newData.tables) {
+      Object.keys(newData.tables).forEach(tableId => {
+        const newRows = newData.tables[tableId] || [];
+        
+        // 过滤掉新数据中全为空的行
+        const validNewRows = newRows.filter(row => {
+          if (!Array.isArray(row)) return false;
+          return row.some(cell => cell !== undefined && cell !== null && String(cell).trim() !== '');
+        });
+        
+        if (validNewRows.length > 0) {
+          if (!mergedTables[tableId] || mergedTables[tableId].length === 0) {
+            mergedTables[tableId] = validNewRows;
+          } else {
+            // 合并：追加新行到旧表格后面
+            mergedTables[tableId] = [...mergedTables[tableId], ...validNewRows];
+          }
+        }
+      });
+    }
+    
+    // 合并表格文件数据
+    const mergedTableFileBase64 = {};
+    
+    // 先复制旧数据中的文件
+    if (existingData.tableFileBase64) {
+      Object.keys(existingData.tableFileBase64).forEach(field => {
+        mergedTableFileBase64[field] = {};
+        Object.keys(existingData.tableFileBase64[field]).forEach(rowKey => {
+          mergedTableFileBase64[field][rowKey] = [...existingData.tableFileBase64[field][rowKey]];
+        });
+      });
+    }
+    
+    // 再合并新数据中的文件
+    if (newData.tableFileBase64) {
+      Object.keys(newData.tableFileBase64).forEach(field => {
+        if (!mergedTableFileBase64[field]) mergedTableFileBase64[field] = {};
+        
+        // 获取已有文件的最大行索引
+        const existingRowKeys = Object.keys(mergedTableFileBase64[field]).map(k => parseInt(k));
+        const maxRowIndex = existingRowKeys.length > 0 ? Math.max(...existingRowKeys) : -1;
+        
+        // 新文件的行索引从0开始，需要偏移到已有数据之后
+        Object.keys(newData.tableFileBase64[field]).forEach((rowIndex, idx) => {
+          const newRowIndex = maxRowIndex + 1 + idx;
+          const files = newData.tableFileBase64[field][rowIndex];
+          if (Array.isArray(files) && files.length > 0) {
+            mergedTableFileBase64[field][newRowIndex] = files.map(f => ({
+              name: f.name || 'unnamed',
+              type: f.type || 'application/octet-stream',
+              size: f.size || 0,
+              data: f.data || ''
+            }));
+          }
+        });
+      });
+    }
+    
+    // 构建合并后的完整数据
+    const mergedData = {
+      fields: mergedFields,
+      tables: mergedTables,
+      tableFileBase64: mergedTableFileBase64
+    };
+    
+    // 保存到LocalStorage
+    saveToStorage(mergedData);
+    
+    // 填充表单
+    populateFormData(mergedData);
+    
+    // 记录导入历史
+    addImportHistory(file.name);
+    
+    showToast(`✅ "${file.name}" 导入成功！数据已合并到表单中\n可以继续导入其他人员的JSON文件`);
+    
+    if (currentRole === 'admin') {
+      applyRolePermissions();
+    }
+    
+    updateProgress();
+  } catch (err) {
+    console.error('导入错误:', err);
+    alert('文件读取失败：' + err.message + '\n\n可能原因：\n1. 文件过大（超过浏览器内存限制）\n2. 文件格式不正确\n\n建议：让填写者减少图片数量后重新导出，或分批上传。');
+  }
   
   // 清空input，允许重复上传同一文件
   event.target.value = '';
+}
+
+// 分块读取大文件
+function readLargeFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    let result = '';
+    
+    // 对于大文件，使用readAsText直接读取
+    reader.onload = function(e) {
+      resolve(e.target.result);
+    };
+    
+    reader.onerror = function(e) {
+      reject(new Error('文件读取错误: ' + (e.target.error ? e.target.error.message : '未知错误'));
+    };
+    
+    reader.onabort = function() {
+      reject(new Error('文件读取被中断'));
+    };
+    
+    // 直接读取整个文件
+    reader.readAsText(file);
+  });
 }
 
 // 导入历史记录
