@@ -1888,6 +1888,7 @@ function generatePrintHtml(data) {
   
   html += `</body></html>`;
   return html;
+}
 
 async function createKmDoc() {
   showToast('正在收集数据，请稍候...');
@@ -2379,7 +2380,7 @@ function readLargeFile(file) {
     };
     
     reader.onerror = function(e) {
-      reject(new Error('文件读取错误: ' + (e.target.error ? e.target.error.message : '未知错误'));
+      reject(new Error('文件读取错误: ' + (e.target.error ? e.target.error.message : '未知错误')));
     };
     
     reader.onabort = function() {
