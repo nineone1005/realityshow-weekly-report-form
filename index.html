@@ -644,7 +644,21 @@
       </div>
       <div class="field-group">
         <label class="field-label">站内榜单表现</label>
-        <textarea name="platformRankings" rows="2" placeholder="例如：腾讯视频总榜飙升榜TOP1、综艺热播榜TOP1..."></textarea>
+        <div class="field-desc">填写站内各榜单排名情况，支持每行上传榜单截图</div>
+        <table class="table-inputs" id="platformRankingsTable">
+          <thead>
+            <tr><th>榜单名称</th><th>排名/数据</th><th>持续天数</th><th>榜单截图</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><input placeholder="腾讯视频总榜飙升榜"></td>
+              <td><input placeholder="TOP1"></td>
+              <td><input placeholder="4天"></td>
+              <td class="cell-upload-col" data-upload-field="platformRankingsScreenshots"></td>
+            </tr>
+          </tbody>
+        </table>
+        <button type="button" class="add-row-btn" onclick="addTableRowWithUpload('platformRankingsTable', 'platformRankingsScreenshots')">+ 添加一行</button>
       </div>
       <div class="field-group">
         <label class="field-label">三方榜单数据</label>
@@ -663,6 +677,29 @@
           </tbody>
         </table>
         <button type="button" class="add-row-btn" onclick="addTableRowWithUpload('thirdPartyTable', 'thirdPartyScreenshots')">+ 添加一行</button>
+      </div>
+      <div class="field-group">
+        <label class="field-label">同期综艺对比</label>
+        <div class="field-desc">比对同期其他综艺的播出数据表现</div>
+        <table class="table-inputs" id="competitorTable">
+          <thead>
+            <tr><th>综艺项目</th><th>播出平台</th><th>上线时间</th><th>更新至</th><th>EP01站内热度峰值</th><th>Vlinkage</th><th>云合</th><th>灯塔</th><th>猫眼</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><input placeholder="例如：姐姐当家2"></td>
+              <td><input placeholder="例如：爱奇艺"></td>
+              <td><input placeholder="例如：2026年7月11日"></td>
+              <td><input placeholder="例如：EP01"></td>
+              <td><input placeholder="例如：28000"></td>
+              <td><input placeholder="例如：TOP1*4"></td>
+              <td><input placeholder="例如：TOP2*3"></td>
+              <td><input placeholder="例如：TOP1*5"></td>
+              <td><input placeholder="例如：未进TOP10"></td>
+            </tr>
+          </tbody>
+        </table>
+        <button type="button" class="add-row-btn" onclick="addTableRow('competitorTable')">+ 添加一行</button>
       </div>
       <div class="field-group">
         <label class="field-label">社媒指数</label>
@@ -1822,12 +1859,20 @@ function generatePrintHtml(data) {
   if (f.broadcastConclusion) {
     html += `<p>1. ${formatFieldValue(f.broadcastConclusion).replace(/\n/g, '<br>')}</p>`;
   }
+  if (t.platformRankingsTable && t.platformRankingsTable.length > 0) {
+    html += `<p>2. 站内榜单表现</p>`;
+    html += generateTableHtml(t.platformRankingsTable, ['榜单名称', '排名/数据', '持续天数']);
+  }
   if (t.thirdPartyTable && t.thirdPartyTable.length > 0) {
-    html += `<p>2. 三方榜单数据</p>`;
+    html += `<p>3. 三方榜单数据</p>`;
     html += generateTableHtml(t.thirdPartyTable, ['榜单名称', '排名/数据', '持续天数']);
   }
+  if (t.competitorTable && t.competitorTable.length > 0) {
+    html += `<p>4. 同期综艺对比</p>`;
+    html += generateTableHtml(t.competitorTable, ['综艺项目', '播出平台', '上线时间', '更新至', 'EP01站内热度峰值', 'Vlinkage', '云合', '灯塔', '猫眼']);
+  }
   if (f.socialIndex) {
-    html += `<p>3. 社媒指数：${formatFieldValue(f.socialIndex)}</p>`;
+    html += `<p>5. 社媒指数：${formatFieldValue(f.socialIndex)}</p>`;
   }
   
   // 节目传播
@@ -1985,13 +2030,23 @@ function generateSummaryText(data) {
   if (f.broadcastConclusion) {
     text += `1. ${formatFieldValue(f.broadcastConclusion)}\n\n`;
   }
+  if (t.platformRankingsTable && t.platformRankingsTable.length > 0) {
+    text += `2. 站内榜单表现\n\n`;
+    text += generateTableMarkdown(t.platformRankingsTable, ['榜单名称', '排名/数据', '持续天数']);
+    text += '\n';
+  }
   if (t.thirdPartyTable && t.thirdPartyTable.length > 0) {
-    text += `2. 三方榜单数据\n\n`;
+    text += `3. 三方榜单数据\n\n`;
     text += generateTableMarkdown(t.thirdPartyTable, ['榜单名称', '排名/数据', '持续天数']);
     text += '\n';
   }
+  if (t.competitorTable && t.competitorTable.length > 0) {
+    text += `4. 同期综艺对比\n\n`;
+    text += generateTableMarkdown(t.competitorTable, ['综艺项目', '播出平台', '上线时间', '更新至', 'EP01站内热度峰值', 'Vlinkage', '云合', '灯塔', '猫眼']);
+    text += '\n';
+  }
   if (f.socialIndex) {
-    text += `3. 社媒指数：${formatFieldValue(f.socialIndex)}\n\n`;
+    text += `5. 社媒指数：${formatFieldValue(f.socialIndex)}\n\n`;
   }
   
   // 节目传播
