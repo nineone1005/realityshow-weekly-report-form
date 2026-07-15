@@ -703,8 +703,33 @@
       </div>
       <div class="field-group">
         <label class="field-label">社媒指数</label>
-        <div class="field-desc">百度指数、微信指数、微博指数等</div>
-        <textarea name="socialIndex" rows="2" placeholder="百度指数：15,809；微信指数：3,946,778..."></textarea>
+        <div class="field-desc">百度指数、微信指数、微博指数，支持每项上传数据截图</div>
+        <table class="table-inputs" id="socialIndexTable">
+          <thead>
+            <tr><th>指数类别</th><th>指数数值</th><th>趋势/说明</th><th>数据截图</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><input placeholder="百度指数" value="百度指数"></td>
+              <td><input placeholder="例如：15,809"></td>
+              <td><input placeholder="例如：环比上升12%"></td>
+              <td class="cell-upload-col" data-upload-field="socialIndexScreenshots"></td>
+            </tr>
+            <tr>
+              <td><input placeholder="微信指数" value="微信指数"></td>
+              <td><input placeholder="例如：3,946,778"></td>
+              <td><input placeholder="例如：达到峰值"></td>
+              <td class="cell-upload-col" data-upload-field="socialIndexScreenshots"></td>
+            </tr>
+            <tr>
+              <td><input placeholder="微博指数" value="微博指数"></td>
+              <td><input placeholder="例如：892,341"></td>
+              <td><input placeholder="例如：话题讨论量高"></td>
+              <td class="cell-upload-col" data-upload-field="socialIndexScreenshots"></td>
+            </tr>
+          </tbody>
+        </table>
+        <button type="button" class="add-row-btn" onclick="addTableRowWithUpload('socialIndexTable', 'socialIndexScreenshots')">+ 添加一行</button>
       </div>
     </div>
 
@@ -812,35 +837,6 @@
           </div>
         </div>
       </div>
-
-      <div class="collapsible">
-        <div class="collapsible-header" onclick="toggleCollapsible(this)">爆款作品</div>
-        <div class="collapsible-body">
-          <div class="field-group">
-            <label class="field-label">爆款作品描述</label>
-            <textarea name="hitWorksDesc" rows="3" placeholder="描述爆款作品名称、传播效果、全网模仿情况等"></textarea>
-          </div>
-          <div class="field-group">
-            <label class="field-label">爆款作品截图/视频</label>
-            <div class="field-desc">支持每行上传截图或视频</div>
-            <table class="table-inputs" id="hitWorksTable">
-              <thead>
-                <tr><th>作品名称</th><th>平台</th><th>播放量/互动量</th><th>备注</th><th>截图/视频</th></tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><input placeholder="技能五子棋"></td>
-                  <td><input placeholder="抖音"></td>
-                  <td><input placeholder="2亿+"></td>
-                  <td><input placeholder="全网模仿"></td>
-                  <td class="cell-upload-col" data-upload-field="hitWorksMedia"></td>
-                </tr>
-              </tbody>
-            </table>
-            <button type="button" class="add-row-btn" onclick="addTableRowWithUpload('hitWorksTable', 'hitWorksMedia')">+ 添加一行</button>
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- 5. 节目权益表现 -->
@@ -879,8 +875,22 @@
       </div>
       <div class="field-group">
         <label class="field-label">二身份客户权益</label>
-        <div class="field-desc">如有其他客户权益对比，请填写</div>
-        <textarea name="secondClientRights" rows="2" placeholder="例如：安慕希权益展示..."></textarea>
+        <div class="field-desc">如有其他客户权益对比，请按权益种类、类型、时长/次数、溢出填写，支持上传上刊物料</div>
+        <table class="table-inputs" id="secondClientRightsTable">
+          <thead>
+            <tr><th>权益种类</th><th>权益类型</th><th>时长/次数</th><th>溢出</th><th>上刊物料</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><input placeholder="品牌露出"></td>
+              <td><input placeholder="舞美露出"></td>
+              <td><input placeholder="776秒"></td>
+              <td><input placeholder=""></td>
+              <td class="cell-upload-col" data-upload-field="secondClientRightsMedia"></td>
+            </tr>
+          </tbody>
+        </table>
+        <button type="button" class="add-row-btn" onclick="addTableRowWithUpload('secondClientRightsTable', 'secondClientRightsMedia')">+ 添加一行</button>
       </div>
       <div class="field-group">
         <label class="field-label">客户权益秒数汇总</label>
@@ -1103,37 +1113,6 @@
           </tbody>
         </table>
         <button type="button" class="add-row-btn" onclick="addTableRowWithUpload('siteTable', 'siteScreenshots')">+ 添加一行</button>
-      </div>
-    </div>
-
-    <!-- 9. 填写人信息 -->
-    <div class="section" data-section="reporter">
-      <div class="section-title">
-        填写人信息
-        <span class="badge">必填</span>
-        <span class="section-status status-empty" id="status-reporter">未填写</span>
-      </div>
-      <div class="row">
-        <div class="col">
-          <div class="field-group">
-            <label class="field-label">填写人姓名<span class="required">*</span></label>
-            <input type="text" name="reporterName" placeholder="请输入姓名" required>
-          </div>
-        </div>
-        <div class="col">
-          <div class="field-group">
-            <label class="field-label">所属部门/合作方<span class="required">*</span></label>
-            <input type="text" name="reporterDept" placeholder="例如：美团团购市场部" required>
-          </div>
-        </div>
-      </div>
-      <div class="field-group">
-        <label class="field-label">联系方式（MIS或邮箱）</label>
-        <input type="text" name="reporterContact" placeholder="例如：pengdanqi">
-      </div>
-      <div class="field-group">
-        <label class="field-label">备注/补充说明</label>
-        <textarea name="remarks" rows="2" placeholder="其他需要说明的内容"></textarea>
       </div>
     </div>
 
@@ -1737,8 +1716,7 @@ async function submitPartial() {
   const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
   const projectName = (f.projectName || '未命名').replace(/[\\/:*?"<>|]/g, '_');
   const episode = (f.episode || '').replace(/[\\/:*?"<>|]/g, '_');
-  const reporter = (f.reporterName || '匿名').replace(/[\\/:*?"<>|]/g, '_');
-  const fileName = `周报_${projectName}_${episode}_${reporter}_${dateStr}.json`;
+  const fileName = `周报_${projectName}_${episode}_${dateStr}.json`;
   
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -1871,8 +1849,9 @@ function generatePrintHtml(data) {
     html += `<p>4. 同期综艺对比</p>`;
     html += generateTableHtml(t.competitorTable, ['综艺项目', '播出平台', '上线时间', '更新至', 'EP01站内热度峰值', 'Vlinkage', '云合', '灯塔', '猫眼']);
   }
-  if (f.socialIndex) {
-    html += `<p>5. 社媒指数：${formatFieldValue(f.socialIndex)}</p>`;
+  if (t.socialIndexTable && t.socialIndexTable.length > 0) {
+    html += `<p>5. 社媒指数</p>`;
+    html += generateTableHtml(t.socialIndexTable, ['指数类别', '指数数值', '趋势/说明']);
   }
   
   // 节目传播
@@ -1898,8 +1877,12 @@ function generatePrintHtml(data) {
     html += `<p>2. 权益明细</p>`;
     html += generateTableHtml(t.rightsTable, ['权益种类', '权益类型', '时长/次数', '溢出']);
   }
+  if (t.secondClientRightsTable && t.secondClientRightsTable.length > 0) {
+    html += `<p>3. 二身份客户权益</p>`;
+    html += generateTableHtml(t.secondClientRightsTable, ['权益种类', '权益类型', '时长/次数', '溢出']);
+  }
   if (t.clientSecondsTable && t.clientSecondsTable.length > 0) {
-    html += `<p>3. 客户权益秒数汇总</p>`;
+    html += `<p>4. 客户权益秒数汇总</p>`;
     html += generateTableHtml(t.clientSecondsTable, ['品牌', '露出总时长（s）']);
   }
   
@@ -2045,8 +2028,10 @@ function generateSummaryText(data) {
     text += generateTableMarkdown(t.competitorTable, ['综艺项目', '播出平台', '上线时间', '更新至', 'EP01站内热度峰值', 'Vlinkage', '云合', '灯塔', '猫眼']);
     text += '\n';
   }
-  if (f.socialIndex) {
-    text += `5. 社媒指数：${formatFieldValue(f.socialIndex)}\n\n`;
+  if (t.socialIndexTable && t.socialIndexTable.length > 0) {
+    text += `5. 社媒指数\n\n`;
+    text += generateTableMarkdown(t.socialIndexTable, ['指数类别', '指数数值', '趋势/说明']);
+    text += '\n';
   }
   
   // 节目传播
@@ -2075,8 +2060,13 @@ function generateSummaryText(data) {
     text += generateTableMarkdown(t.rightsTable, ['权益种类', '权益类型', '时长/次数', '溢出']);
     text += '\n';
   }
+  if (t.secondClientRightsTable && t.secondClientRightsTable.length > 0) {
+    text += `3. 二身份客户权益\n\n`;
+    text += generateTableMarkdown(t.secondClientRightsTable, ['权益种类', '权益类型', '时长/次数', '溢出']);
+    text += '\n';
+  }
   if (t.clientSecondsTable && t.clientSecondsTable.length > 0) {
-    text += `3. 客户权益秒数汇总\n\n`;
+    text += `4. 客户权益秒数汇总\n\n`;
     text += generateTableMarkdown(t.clientSecondsTable, ['品牌', '露出总时长（s）']);
     text += '\n';
   }
