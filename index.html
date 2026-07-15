@@ -1625,6 +1625,12 @@ function populateFormData(data) {
   }
 }
 
+// 管理员专属字段列表（仅管理员可编辑，普通用户不可覆盖）
+const ADMIN_ONLY_FIELDS = ['projectName', 'episode', 'platform', 'airDate', 'projectBackground'];
+
+// 管理员专属表格列表（仅管理员可编辑，普通用户不可覆盖）
+const ADMIN_ONLY_TABLES = ['scheduleTable'];
+
 // ===================== 保存部分数据（接力填写） =====================
 function savePartial() {
   const data = collectFormData();
@@ -1639,6 +1645,11 @@ function savePartial() {
       // 跳过空值
       if (newValue === undefined || newValue === null) return;
       if (typeof newValue === 'string' && newValue.trim() === '') return;
+      
+      // 管理员专属字段保护：如果当前不是管理员且字段已有值，不允许覆盖
+      if (ADMIN_ONLY_FIELDS.includes(key) && existingValue && currentRole !== 'admin') {
+        return;
+      }
       
       // 如果是新字段，直接添加
       if (!existingValue) {
@@ -1661,9 +1672,28 @@ function savePartial() {
     });
   }
   
+  // 合并表格数据：普通用户不能覆盖管理员专属表格
+  const mergedTables = { ...existing.tables };
+  if (data.tables) {
+    Object.keys(data.tables).forEach(tableId => {
+      const newRows = data.tables[tableId] || [];
+      // 过滤掉全为空的行
+      const validNewRows = newRows.filter(row => row.some(v => v !== ''));
+      
+      if (validNewRows.length === 0) return;
+      
+      // 管理员专属表格保护：非管理员不能覆盖已有数据
+      if (ADMIN_ONLY_TABLES.includes(tableId) && mergedTables[tableId] && mergedTables[tableId].length > 0 && currentRole !== 'admin') {
+        return;
+      }
+      
+      mergedTables[tableId] = validNewRows;
+    });
+  }
+  
   const merged = {
     fields: mergedFields,
-    tables: { ...existing.tables, ...data.tables }
+    tables: mergedTables
   };
   // 合并表格文件数据
   const mergedTableFiles = {};
@@ -2196,6 +2226,22 @@ async function mergeAndSaveAll() {
 function clearAllData() {
   if (!confirm('确定要清空本周所有数据吗？此操作不可恢复。')) return;
   
+  // 保存管理员专属数据，清空后自动恢复
+  const existingData = loadFromStorage();
+  const adminData = { fields: {}, tables: {} };
+  if (existingData) {
+    ADMIN_ONLY_FIELDS.forEach(key => {
+      if (existingData.fields && existingData.fields[key]) {
+        adminData.fields[key] = existingData.fields[key];
+      }
+    });
+    ADMIN_ONLY_TABLES.forEach(tableId => {
+      if (existingData.tables && existingData.tables[tableId]) {
+        adminData.tables[tableId] = existingData.tables[tableId];
+      }
+    });
+  }
+  
   localStorage.removeItem(STORAGE_KEY);
   localStorage.removeItem(IMPORT_HISTORY_KEY);
   
@@ -2232,8 +2278,20 @@ function clearAllData() {
   // 清空导入历史显示
   renderImportHistory();
   
+  // 如果有管理员数据，恢复管理员专属字段
+  if (Object.keys(adminData.fields).length > 0 || Object.keys(adminData.tables).length > 0) {
+    const restoredData = {
+      fields: adminData.fields,
+      tables: adminData.tables
+    };
+    saveToStorage(restoredData);
+    populateFormData(restoredData);
+    showToast('本周数据已清空，管理员基础信息已保留');
+  } else {
+    showToast('本周数据已清空，可以开始新一轮收集');
+  }
+  
   updateProgress();
-  showToast('本周数据已清空，可以开始新一轮收集');
 }
 
 // ===================== 导入JSON文件（管理员功能） =====================
