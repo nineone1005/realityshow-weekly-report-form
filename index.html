@@ -661,24 +661,6 @@
         <button type="button" class="add-row-btn" onclick="addTableRowWithUpload('platformRankingsTable', 'platformRankingsScreenshots')">+ 添加一行</button>
       </div>
       <div class="field-group">
-        <label class="field-label">三方榜单数据</label>
-        <div class="field-desc">Vlinkage、云合、灯塔、猫眼等，支持每行上传上榜截图</div>
-        <table class="table-inputs" id="thirdPartyTable">
-          <thead>
-            <tr><th>榜单名称</th><th>排名/数据</th><th>持续天数</th><th>上榜截图</th></tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><input placeholder="Vlinkage"></td>
-              <td><input placeholder="TOP1"></td>
-              <td><input placeholder="4天"></td>
-              <td class="cell-upload-col" data-upload-field="thirdPartyScreenshots"></td>
-            </tr>
-          </tbody>
-        </table>
-        <button type="button" class="add-row-btn" onclick="addTableRowWithUpload('thirdPartyTable', 'thirdPartyScreenshots')">+ 添加一行</button>
-      </div>
-      <div class="field-group">
         <label class="field-label">同期综艺对比</label>
         <div class="field-desc">比对同期其他综艺的播出数据表现</div>
         <table class="table-inputs" id="competitorTable">
@@ -947,10 +929,9 @@
       </div>
       <div class="field-group">
         <label class="field-label">硬广分端数据</label>
-        <div class="field-desc">支持每行上传素材截图</div>
         <table class="table-inputs" id="adsTable">
           <thead>
-            <tr><th>资源</th><th>端</th><th>曝光PV</th><th>占比</th><th>点击率</th><th>备注</th><th>素材截图</th></tr>
+            <tr><th>资源</th><th>端</th><th>曝光PV</th><th>占比</th><th>点击率</th></tr>
           </thead>
           <tbody>
             <tr>
@@ -959,12 +940,10 @@
               <td><input placeholder="5990745"></td>
               <td><input placeholder="78%"></td>
               <td><input placeholder="2.38%"></td>
-              <td><input placeholder=""></td>
-              <td class="cell-upload-col" data-upload-field="adsScreenshots"></td>
             </tr>
           </tbody>
         </table>
-        <button type="button" class="add-row-btn" onclick="addTableRowWithUpload('adsTable', 'adsScreenshots')">+ 添加一行</button>
+        <button type="button" class="add-row-btn" onclick="addTableRow('adsTable')">+ 添加一行</button>
       </div>
     </div>
 
@@ -1836,8 +1815,10 @@ function generatePrintHtml(data) {
   const conclusions = [
     { title: '【节目播出】', content: f.broadcastConclusion || f.scheduleConclusion },
     { title: '【节目传播】', content: f.spreadConclusion },
-    { title: '【节目植入】', content: f.rightsConclusion },
-    { title: '【节目硬广】', content: f.adsConclusion }
+    { title: '【节目权益】', content: f.rightsConclusion },
+    { title: '【节目硬广】', content: f.adsConclusion },
+    { title: '【品牌传播】', content: f.brandConclusion },
+    { title: '【站内承接】', content: f.siteConclusion }
   ];
   let idx = 1;
   conclusions.forEach(item => {
@@ -1871,16 +1852,12 @@ function generatePrintHtml(data) {
     html += `<p>2. 站内榜单表现</p>`;
     html += generateTableHtml(t.platformRankingsTable, ['榜单名称', '排名/数据', '持续天数']);
   }
-  if (t.thirdPartyTable && t.thirdPartyTable.length > 0) {
-    html += `<p>3. 三方榜单数据</p>`;
-    html += generateTableHtml(t.thirdPartyTable, ['榜单名称', '排名/数据', '持续天数']);
-  }
   if (t.competitorTable && t.competitorTable.length > 0) {
-    html += `<p>4. 同期综艺对比</p>`;
+    html += `<p>3. 同期综艺对比</p>`;
     html += generateTableHtml(t.competitorTable, ['综艺项目', '播出平台', '上线时间', '更新至', 'EP01站内热度峰值', 'Vlinkage', '云合', '灯塔', '猫眼']);
   }
   if (t.socialIndexTable && t.socialIndexTable.length > 0) {
-    html += `<p>5. 社媒指数</p>`;
+    html += `<p>4. 社媒指数</p>`;
     html += generateTableHtml(t.socialIndexTable, ['指数类别', '指数数值', '趋势/说明']);
   }
   
@@ -1923,7 +1900,7 @@ function generatePrintHtml(data) {
   }
   if (t.adsTable && t.adsTable.length > 0) {
     html += `<p>2. 硬广分端数据</p>`;
-    html += generateTableHtml(t.adsTable, ['资源', '端', '曝光PV', '占比', '点击率', '备注']);
+    html += generateTableHtml(t.adsTable, ['资源', '端', '曝光PV', '占比', '点击率']);
   }
   
   // 品牌传播
@@ -1988,13 +1965,22 @@ function generateSummaryText(data) {
     return value || '';
   }
   
-  // 辅助函数：生成表格Markdown
-  function generateTableMarkdown(tableData, headers) {
+  // 辅助函数：生成表格Markdown，支持图片嵌入
+  function generateTableMarkdown(tableData, headers, imageField) {
     if (!tableData || tableData.length === 0) return '';
-    let md = '| ' + headers.join(' | ') + ' |\n';
-    md += '|' + headers.map(() => ' --- ').join('|') + '|\n';
-    tableData.forEach(row => {
-      md += '| ' + row.map(cell => cell || '').join(' | ') + ' |\n';
+    const allHeaders = imageField ? [...headers, '截图'] : headers;
+    let md = '| ' + allHeaders.join(' | ') + ' |\n';
+    md += '|' + allHeaders.map(() => ' --- ').join('|') + '|\n';
+    tableData.forEach((row, rowIndex) => {
+      let cells = row.map(cell => cell || '');
+      if (imageField && data.tableFileBase64 && data.tableFileBase64[imageField]) {
+        const files = data.tableFileBase64[imageField][rowIndex] || [];
+        const imageTags = files.filter(f => f.type.startsWith('image/')).map(f => {
+          return `![${f.name}](data:${f.type};base64,${f.data})`;
+        }).join('<br>');
+        cells.push(imageTags || '');
+      }
+      md += '| ' + cells.join(' | ') + ' |\n';
     });
     return md;
   }
@@ -2009,8 +1995,10 @@ function generateSummaryText(data) {
   const conclusions = [
     { title: '【节目播出】', content: f.broadcastConclusion || f.scheduleConclusion },
     { title: '【节目传播】', content: f.spreadConclusion },
-    { title: '【节目植入】', content: f.rightsConclusion },
-    { title: '【节目硬广】', content: f.adsConclusion }
+    { title: '【节目权益】', content: f.rightsConclusion },
+    { title: '【节目硬广】', content: f.adsConclusion },
+    { title: '【品牌传播】', content: f.brandConclusion },
+    { title: '【站内承接】', content: f.siteConclusion }
   ];
   
   let idx = 1;
@@ -2045,22 +2033,17 @@ function generateSummaryText(data) {
   }
   if (t.platformRankingsTable && t.platformRankingsTable.length > 0) {
     text += `2. 站内榜单表现\n\n`;
-    text += generateTableMarkdown(t.platformRankingsTable, ['榜单名称', '排名/数据', '持续天数']);
-    text += '\n';
-  }
-  if (t.thirdPartyTable && t.thirdPartyTable.length > 0) {
-    text += `3. 三方榜单数据\n\n`;
-    text += generateTableMarkdown(t.thirdPartyTable, ['榜单名称', '排名/数据', '持续天数']);
+    text += generateTableMarkdown(t.platformRankingsTable, ['榜单名称', '排名/数据', '持续天数'], 'platformRankingsScreenshots');
     text += '\n';
   }
   if (t.competitorTable && t.competitorTable.length > 0) {
-    text += `4. 同期综艺对比\n\n`;
+    text += `3. 同期综艺对比\n\n`;
     text += generateTableMarkdown(t.competitorTable, ['综艺项目', '播出平台', '上线时间', '更新至', 'EP01站内热度峰值', 'Vlinkage', '云合', '灯塔', '猫眼']);
     text += '\n';
   }
   if (t.socialIndexTable && t.socialIndexTable.length > 0) {
-    text += `5. 社媒指数\n\n`;
-    text += generateTableMarkdown(t.socialIndexTable, ['指数类别', '指数数值', '趋势/说明']);
+    text += `4. 社媒指数\n\n`;
+    text += generateTableMarkdown(t.socialIndexTable, ['指数类别', '指数数值', '趋势/说明'], 'socialIndexScreenshots');
     text += '\n';
   }
   
@@ -2071,12 +2054,12 @@ function generateSummaryText(data) {
   }
   if (t.hotSearchTable && t.hotSearchTable.length > 0) {
     text += `2. 热搜数据\n\n`;
-    text += generateTableMarkdown(t.hotSearchTable, ['平台', '热搜总数', '主榜上榜数', '主榜TOP个数', '文娱榜上榜数', '高位热搜内容']);
+    text += generateTableMarkdown(t.hotSearchTable, ['平台', '热搜总数', '主榜上榜数', '主榜TOP个数', '文娱榜上榜数', '高位热搜内容'], 'hotSearchScreenshots');
     text += '\n';
   }
   if (t.shortVideoTable && t.shortVideoTable.length > 0) {
     text += `3. 短视频数据\n\n`;
-    text += generateTableMarkdown(t.shortVideoTable, ['平台', '话题总播放量', '新增播放量', '发布数量', '爆款数量', '备注']);
+    text += generateTableMarkdown(t.shortVideoTable, ['平台', '话题总播放量', '新增播放量', '发布数量', '爆款数量', '备注'], 'shortVideoScreenshots');
     text += '\n';
   }
   
@@ -2087,12 +2070,12 @@ function generateSummaryText(data) {
   }
   if (t.rightsTable && t.rightsTable.length > 0) {
     text += `2. 权益明细\n\n`;
-    text += generateTableMarkdown(t.rightsTable, ['权益种类', '权益类型', '时长/次数', '溢出']);
+    text += generateTableMarkdown(t.rightsTable, ['权益种类', '权益类型', '时长/次数', '溢出'], 'rightsMedia');
     text += '\n';
   }
   if (t.secondClientRightsTable && t.secondClientRightsTable.length > 0) {
     text += `3. 二身份客户权益\n\n`;
-    text += generateTableMarkdown(t.secondClientRightsTable, ['权益种类', '权益类型', '时长/次数', '溢出']);
+    text += generateTableMarkdown(t.secondClientRightsTable, ['权益种类', '权益类型', '时长/次数', '溢出'], 'secondClientRightsMedia');
     text += '\n';
   }
   if (t.clientSecondsTable && t.clientSecondsTable.length > 0) {
@@ -2108,7 +2091,7 @@ function generateSummaryText(data) {
   }
   if (t.adsTable && t.adsTable.length > 0) {
     text += `2. 硬广分端数据\n\n`;
-    text += generateTableMarkdown(t.adsTable, ['资源', '端', '曝光PV', '占比', '点击率', '备注']);
+    text += generateTableMarkdown(t.adsTable, ['资源', '端', '曝光PV', '占比', '点击率']);
     text += '\n';
   }
   
@@ -2126,30 +2109,10 @@ function generateSummaryText(data) {
     text += `##### **站内承接：**\n\n`;
     if (f.siteConclusion) text += `${formatFieldValue(f.siteConclusion)}\n\n`;
     if (t.siteTable && t.siteTable.length > 0) {
-      text += generateTableMarkdown(t.siteTable, ['日期', '搜索QV', '搜索UV', 'QV_CTR', 'UV_CTR', '意向UV', '意向率', '支付订单量', '支付UV', '搜索GTV', '搜索实付GTV']);
+      text += generateTableMarkdown(t.siteTable, ['日期', '搜索QV', '搜索UV', 'QV_CTR', 'UV_CTR', '意向UV', '意向率', '支付订单量', '支付UV', '搜索GTV', '搜索实付GTV'], 'siteScreenshots');
       text += '\n';
     }
   }
-  
-  // 图片附件信息
-  text += `\n---\n\n`;
-  text += `**图片附件：**\n\n`;
-  const tableFileBase64 = data.tableFileBase64 || {};
-  let hasImages = false;
-  Object.keys(tableFileBase64).forEach(field => {
-    Object.keys(tableFileBase64[field]).forEach(rowIndex => {
-      tableFileBase64[field][rowIndex].forEach(file => {
-        if (file.type.startsWith('image/')) {
-          text += `- ${file.name} [${field} 第${parseInt(rowIndex)+1}行]\n`;
-          hasImages = true;
-        }
-      });
-    });
-  });
-  if (!hasImages) text += '（无图片附件）\n';
-  
-  text += `\n**操作说明：**\n`;
-  text += `请把下载的JSON文件直接发送给我，我会创建学城文档并嵌入图片\n`;
   
   return text;
 }
